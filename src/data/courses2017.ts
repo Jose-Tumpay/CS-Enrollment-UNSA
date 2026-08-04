@@ -1,0 +1,91 @@
+import { Course } from '../types';
+
+export const courses2017: Course[] = [
+  // PRIMER AÑO - PRIMER SEMESTRE
+  { code: '1701101', name: 'RAZONAMIENTO LÓGICO MATEMÁTICO', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 1, semester: 1, component: 'D', prerequisites: [], plan: '2017' },
+  { code: '1701102', name: 'METODOLOGÍA DEL TRABAJO INTELECTUAL UNIVERSITARIO', credits: 2, hoursTheory: 0, hoursPractice: 4, hoursLab: 0, year: 1, semester: 1, component: 'D', prerequisites: [], plan: '2017' },
+  { code: '1701104', name: 'ARTE COMPUTACIONAL', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 1, semester: 1, component: 'E', prerequisites: [], plan: '2017' },
+  { code: '1701105', name: 'INGLÉS TÉCNICO PROFESIONAL I', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 1, semester: 1, component: 'D', prerequisites: [], plan: '2017' },
+  { code: '1701106', name: 'FUNDAMENTOS DE COMPUTACIÓN', credits: 4, hoursTheory: 2, hoursPractice: 0, hoursLab: 4, year: 1, semester: 1, component: 'F', prerequisites: [], plan: '2017' },
+  { code: '1701107', name: 'ESTRUCTURAS DISCRETAS I', credits: 4, hoursTheory: 2, hoursPractice: 4, hoursLab: 0, year: 1, semester: 1, component: 'F', prerequisites: [], plan: '2017' },
+  { code: '1701114', name: 'LIDERAZGO Y ORATORIA', credits: 2, hoursTheory: 1, hoursPractice: 2, hoursLab: 0, year: 1, semester: 1, component: 'E', prerequisites: [], plan: '2017' },
+
+  // PRIMER AÑO - SEGUNDO SEMESTRE
+  { code: '1701208', name: 'ESTRUCTURAS DISCRETAS II', credits: 5, hoursTheory: 2, hoursPractice: 2, hoursLab: 4, year: 1, semester: 2, component: 'F', prerequisites: ['1701107','1701106'], plan: '2017' },
+  { code: '1701209', name: 'CIENCIA DE LA COMPUTACIÓN I', credits: 5, hoursTheory: 2, hoursPractice: 2, hoursLab: 4, year: 1, semester: 2, component: 'F', prerequisites: ['1701106'], plan: '2017' },
+  { code: '1701210', name: 'CÁLCULO EN UNA VARIABLE', credits: 5, hoursTheory: 4, hoursPractice: 2, hoursLab: 0, year: 1, semester: 2, component: 'D', prerequisites: [], plan: '2017' },
+  { code: '1701212', name: 'INGLÉS TÉCNICO PROFESIONAL II', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 1, semester: 2, component: 'D', prerequisites: ['1701105'], plan: '2017' },
+  { code: '1701215', name: 'COMUNICACIÓN INTEGRAL', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 1, semester: 2, component: 'E', prerequisites: [], plan: '2017' },
+  { code: '1701216', name: 'REALIDAD NACIONAL', credits: 2, hoursTheory: 1, hoursPractice: 2, hoursLab: 0, year: 1, semester: 2, component: 'E', prerequisites: [], plan: '2017' },
+
+  // SEGUNDO AÑO - PRIMER SEMESTRE
+  { code: '1702117', name: 'ARQUITECTURA DE COMPUTADORES', credits: 3, hoursTheory: 2, hoursPractice: 0, hoursLab: 2, year: 2, semester: 1, component: 'F', prerequisites: ['1701208'], plan: '2017' },
+  { code: '1702118', name: 'CIENCIAS DE LA COMPUTACIÓN II', credits: 5, hoursTheory: 2, hoursPractice: 2, hoursLab: 4, year: 2, semester: 1, component: 'F', prerequisites: ['1701209'], plan: '2017' },
+  { code: '1702119', name: 'DESARROLLO BASADO EN PLATAFORMAS', credits: 3, hoursTheory: 1, hoursPractice: 2, hoursLab: 2, year: 2, semester: 1, component: 'F', prerequisites: ['1701209'], plan: '2017' },
+  { code: '1702120', name: 'TRABAJO INTERDISCIPLINAR I', credits: 2, hoursTheory: 1, hoursPractice: 2, hoursLab: 0, year: 2, semester: 1, component: 'G', prerequisites: ['1701209'], plan: '2017' },
+  { code: '1702121', name: 'CÁLCULO EN VARIAS VARIABLES', credits: 5, hoursTheory: 4, hoursPractice: 2, hoursLab: 0, year: 2, semester: 1, component: 'D', prerequisites: ['1701210'], plan: '2017' },
+  { code: '1702122', name: 'INGLÉS TÉCNICO PROFESIONAL III', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 2, semester: 1, component: 'D', prerequisites: ['1701212'], plan: '2017' },
+  { code: '1702123', name: 'CIUDADANÍA E INTERCULTURALIDAD', credits: 2, hoursTheory: 1, hoursPractice: 2, hoursLab: 0, year: 2, semester: 1, component: 'E', prerequisites: [], plan: '2017' },
+
+  // SEGUNDO AÑO - SEGUNDO SEMESTRE
+  { code: '1702224', name: 'ALGORITMOS Y ESTRUCTURAS DE DATOS', credits: 5, hoursTheory: 2, hoursPractice: 2, hoursLab: 4, year: 2, semester: 2, component: 'F', prerequisites: ['1702118'], plan: '2017' },
+  { code: '1702225', name: 'TEORÍA DE LA COMPUTACIÓN', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 2, semester: 2, component: 'F', prerequisites: ['1701208'], plan: '2017' },
+  { code: '1702226', name: 'BASE DE DATOS I', credits: 4, hoursTheory: 2, hoursPractice: 0, hoursLab: 4, year: 2, semester: 2, component: 'F', prerequisites: ['1701209','1701208'], plan: '2017' },
+  { code: '1702227', name: 'ÁLGEBRA LINEAL NUMÉRICA', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 2, semester: 2, component: 'F', prerequisites: ['1701210'], plan: '2017' },
+  { code: '1702228', name: 'ESTADÍSTICA Y PROBABILIDADES', credits: 4, hoursTheory: 3, hoursPractice: 2, hoursLab: 0, year: 2, semester: 2, component: 'F', prerequisites: ['1702121'], plan: '2017' },
+  { code: '1702229', name: 'ECOLOGÍA Y CONSERVACIÓN AMBIENTAL', credits: 2, hoursTheory: 1, hoursPractice: 2, hoursLab: 0, year: 2, semester: 2, component: 'E', prerequisites: [], plan: '2017' },
+
+  // TERCER AÑO - PRIMER SEMESTRE
+  { code: '1703130', name: 'BASE DE DATOS II', credits: 3, hoursTheory: 1, hoursPractice: 2, hoursLab: 2, year: 3, semester: 1, component: 'F', prerequisites: ['1702226'], plan: '2017' },
+  { code: '1703131', name: 'ANÁLISIS Y DISEÑO DE ALGORITMOS', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 3, semester: 1, component: 'F', prerequisites: ['1702224'], plan: '2017' },
+  { code: '1703132', name: 'INGENIERÍA DE SOFTWARE I', credits: 3, hoursTheory: 2, hoursPractice: 0, hoursLab: 2, year: 3, semester: 1, component: 'F', prerequisites: ['1702118','1702226'], plan: '2017' },
+  { code: '1703133', name: 'COMPILADORES', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 3, semester: 1, component: 'F', prerequisites: ['1702225'], plan: '2017' },
+  { code: '1703134', name: 'ANÁLISIS EXPLORATORIO DE DATOS ESPACIALES', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 3, semester: 1, component: 'F', prerequisites: ['1702228','1702224'], plan: '2017' },
+  { code: '1703135', name: 'ECUACIONES DIFERENCIALES', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 3, semester: 1, component: 'F', prerequisites: ['1702121','1702227'], plan: '2017' },
+
+  // TERCER AÑO - SEGUNDO SEMESTRE
+  { code: '1703236', name: 'PROGRAMACIÓN COMPETITIVA', credits: 3, hoursTheory: 0, hoursPractice: 6, hoursLab: 0, year: 3, semester: 2, component: 'F', prerequisites: ['1703131'], plan: '2017' },
+  { code: '1703237', name: 'INGENIERÍA DE SOFTWARE II', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 3, semester: 2, component: 'F', prerequisites: ['1703132'], plan: '2017' },
+  { code: '1703238', name: 'ESTRUCTURAS DE DATOS AVANZADOS', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 3, semester: 2, component: 'F', prerequisites: ['1703131'], plan: '2017' },
+  { code: '1703239', name: 'SISTEMAS OPERATIVOS', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 3, semester: 2, component: 'F', prerequisites: ['1702117'], plan: '2017' },
+  { code: '1703240', name: 'TRABAJO INTERDISCIPLINAR II', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 3, semester: 2, component: 'G', prerequisites: ['1702120'], plan: '2017' },
+  { code: '1703241', name: 'MATEMÁTICA APLICADA A LA COMPUTACIÓN', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 3, semester: 2, component: 'F', prerequisites: ['1703135'], plan: '2017' },
+
+  // CUARTO AÑO - PRIMER SEMESTRE
+  { code: '1704142', name: 'INVESTIGACIÓN EN CIENCIAS DE LA COMPUTACIÓN', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 4, semester: 1, component: 'F', prerequisites: ['1703131'], plan: '2017' },
+  { code: '1704143', name: 'DESARROLLO DE SOFTWARE EMPRESARIAL', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 4, semester: 1, component: 'F', prerequisites: ['1703132'], plan: '2017' },
+  { code: '1704144', name: 'REDES Y COMUNICACIÓN', credits: 3, hoursTheory: 1, hoursPractice: 2, hoursLab: 2, year: 4, semester: 1, component: 'F', prerequisites: ['1703239'], plan: '2017' },
+  { code: '1704145', name: 'INGENIERÍA DE SOFTWARE III', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 4, semester: 1, component: 'F', prerequisites: ['1703237'], plan: '2017' },
+  { code: '1704146', name: 'COMPUTACIÓN GRÁFICA', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 4, semester: 1, component: 'F', prerequisites: ['1703238','1703241'], plan: '2017' },
+  { code: '1704147', name: 'INTELIGENCIA ARTIFICIAL', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 4, semester: 1, component: 'F', prerequisites: ['1702228'], plan: '2017' },
+
+  // CUARTO AÑO - SEGUNDO SEMESTRE
+  { code: '1704248', name: 'INTERACCIÓN HUMANO COMPUTADOR', credits: 3, hoursTheory: 1, hoursPractice: 4, hoursLab: 0, year: 4, semester: 2, component: 'F', prerequisites: ['1704143'], plan: '2017' },
+  { code: '1704249', name: 'PROYECTO DE FINAL DE CARRERA I', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 4, semester: 2, component: 'G', prerequisites: ['1704142','1703238'], plan: '2017' },
+  { code: '1704250', name: 'COMPUTACIÓN PARALELA Y DISTRIBUIDA', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 4, semester: 2, component: 'F', prerequisites: ['1703236','1704144'], plan: '2017' },
+  { code: '1704251', name: 'SEGURIDAD EN COMPUTACIÓN', credits: 3, hoursTheory: 1, hoursPractice: 2, hoursLab: 2, year: 4, semester: 2, component: 'F', prerequisites: ['1704144'], plan: '2017' },
+  { code: '1704252', name: 'FORMACIÓN DE EMPRESAS DE BASE TECNOLÓGICA I', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 4, semester: 2, component: 'G', prerequisites: ['1704143'], plan: '2017' },
+  { code: '1704253', name: 'RELACIONES HUMANAS', credits: 2, hoursTheory: 1, hoursPractice: 2, hoursLab: 0, year: 4, semester: 2, component: 'E', prerequisites: [], plan: '2017' },
+  { code: '1704254', name: 'FÍSICA COMPUTACIONAL (E)', credits: 3, hoursTheory: 1, hoursPractice: 2, hoursLab: 2, year: 4, semester: 2, component: 'G', prerequisites: ['1703241'], plan: '2017', isElective: true },
+  { code: '1704255', name: 'TÓPICOS EN INGENIERÍA DE SOFTWARE (E)', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 4, semester: 2, component: 'G', prerequisites: ['1704145'], plan: '2017', isElective: true },
+
+  // QUINTO AÑO - PRIMER SEMESTRE
+  { code: '1705156', name: 'PROYECTO DE FINAL DE CARRERA II', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 5, semester: 1, component: 'G', prerequisites: ['1704249'], plan: '2017' },
+  { code: '1705157', name: 'BIG DATA', credits: 3, hoursTheory: 1, hoursPractice: 2, hoursLab: 2, year: 5, semester: 1, component: 'F', prerequisites: ['1703130','1704250'], plan: '2017' },
+  { code: '1705158', name: 'ÉTICA GENERAL Y PROFESIONAL', credits: 2, hoursTheory: 1, hoursPractice: 2, hoursLab: 0, year: 5, semester: 1, component: 'E', prerequisites: [], plan: '2017' },
+  { code: '1705159', name: 'FORMACIÓN DE EMPRESAS DE BASE TECNOLÓGICA II', credits: 2, hoursTheory: 1, hoursPractice: 2, hoursLab: 0, year: 5, semester: 1, component: 'G', prerequisites: ['1704252'], plan: '2017' },
+  { code: '1705160', name: 'INGLÉS TÉCNICO PROFESIONAL IV', credits: 3, hoursTheory: 2, hoursPractice: 2, hoursLab: 0, year: 5, semester: 1, component: 'D', prerequisites: ['1702122'], plan: '2017' },
+  { code: '1705161', name: 'TÓPICOS EN CIENCIA DE DATOS (E)', credits: 4, hoursTheory: 2, hoursPractice: 0, hoursLab: 4, year: 5, semester: 1, component: 'G', prerequisites: ['1703134'], plan: '2017', isElective: true },
+  { code: '1705162', name: 'TÓPICOS EN INTELIGENCIA ARTIFICIAL (E)', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 5, semester: 1, component: 'G', prerequisites: ['1704147'], plan: '2017', isElective: true },
+  { code: '1705163', name: 'TÓPICOS EN COMPUTACIÓN GRÁFICA (E)', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 5, semester: 1, component: 'G', prerequisites: ['1704146'], plan: '2017', isElective: true },
+  { code: '1705164', name: 'BIOINFORMÁTICA (E)', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 5, semester: 1, component: 'G', prerequisites: ['1703241'], plan: '2017', isElective: true },
+
+  // QUINTO AÑO - SEGUNDO SEMESTRE
+  { code: '1705265', name: 'CLOUD COMPUTING', credits: 4, hoursTheory: 2, hoursPractice: 2, hoursLab: 2, year: 5, semester: 2, component: 'F', prerequisites: ['1705157'], plan: '2017' },
+  { code: '1705267', name: 'TRABAJO INTERDISCIPLINAR III', credits: 2, hoursTheory: 1, hoursPractice: 2, hoursLab: 0, year: 5, semester: 2, component: 'G', prerequisites: ['1703240','1704254'], plan: '2017' },
+  { code: '1705268', name: 'INTERNET DE LAS COSAS', credits: 3, hoursTheory: 1, hoursPractice: 2, hoursLab: 2, year: 5, semester: 2, component: 'F', prerequisites: ['1704250'], plan: '2017' },
+  { code: '1705269', name: 'ROBÓTICA (E)', credits: 4, hoursTheory: 2, hoursPractice: 0, hoursLab: 4, year: 5, semester: 2, component: 'G', prerequisites: ['1705162'], plan: '2017', isElective: true },
+  { code: '1705270', name: 'TÓPICOS EN CIBERSEGURIDAD (E)', credits: 4, hoursTheory: 2, hoursPractice: 0, hoursLab: 4, year: 5, semester: 2, component: 'G', prerequisites: ['1704251'], plan: '2017', isElective: true },
+  { code: '1705271', name: 'PRÁCTICAS PRE PROFESIONALES', credits: 2, hoursTheory: 0, hoursPractice: 4, hoursLab: 0, year: 5, semester: 2, component: 'G', prerequisites: [], plan: '2017' },
+  { code: '1705272', name: 'TRABAJO DE INVESTIGACIÓN', credits: 6, hoursTheory: 3, hoursPractice: 6, hoursLab: 0, year: 5, semester: 2, component: 'G', prerequisites: ['1705156'], plan: '2017' },
+];
