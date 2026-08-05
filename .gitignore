@@ -2,3 +2,4 @@ node_modules/
 dist/
 *.tsbuildinfo
 malla-cs-bugfixes.patch
+nuevos-bugs-encontrados.patch

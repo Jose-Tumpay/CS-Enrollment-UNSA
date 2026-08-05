@@ -26,6 +26,7 @@ export function Simulador() {
 
   const handleChangeYear = (year: number) => {
     setEnrollmentTarget({ ...target, year });
+    if (profile.simulatedCourses.length > 0) clearSimulated();
   };
 
   const handleChangeSemester = (semester: 1 | 2) => {

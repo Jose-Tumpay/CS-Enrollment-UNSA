@@ -7,12 +7,10 @@ import {
   BarChart2, Calendar, TrendingUp, AlertCircle,
 } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { useStudentStore } from '../hooks/useStudentStore';
 
 export function Dashboard() {
   const engine = useCurriculumEngine();
   const [, setLocation] = useLocation();
-  const { toggleCourseApproved } = useStudentStore();
 
   if (!engine) return null;
 
@@ -264,7 +262,7 @@ export function Dashboard() {
                   <CourseCard
                     key={course.code}
                     course={course}
-                    onClick={() => toggleCourseApproved(course.code)}
+                    onClick={() => setLocation('/simulador')}
                     layout="list"
                   />
                 ))}
