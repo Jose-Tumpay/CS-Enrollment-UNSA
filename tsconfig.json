@@ -15,7 +15,6 @@
     "strict": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "types": ["node", "vite/client"],
     "paths": {
       "@/*": ["./src/*"]
     }
