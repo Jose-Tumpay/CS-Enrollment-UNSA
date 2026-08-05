@@ -3,3 +3,5 @@ dist/
 *.tsbuildinfo
 malla-cs-bugfixes.patch
 nuevos-bugs-encontrados.patch
+fix-badge-descontinuado-v2.patch
+*.patch

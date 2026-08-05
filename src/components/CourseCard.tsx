@@ -40,8 +40,10 @@ export const CourseCard = memo(function CourseCard({
     phased_out: Ban,
   } as Record<string, typeof Check>)[course.status] ?? Lock;
 
-  // A phased-out 2017 course: not approved and has a 2025 replacement
-  const isPhasedOut = !!(course.replacedBy && course.status !== 'approved');
+  // A phased-out 2017 course: genuinely retired for the current enrollment
+  // period (not just "has an equivalence somewhere" — most 2017 courses do,
+  // whether or not they're actually retired yet).
+  const isPhasedOut = !!(course.isRetiredForPeriod && course.status !== 'approved');
 
   return (
     <motion.button

@@ -24,8 +24,10 @@ export function CourseDetailPanel({ course, onClose, onToggleApprove, unlockedCo
 
   const isApproved = course.status === 'approved';
 
-  // A 2017 course is "phased out" when it has a 2025 replacement and is not yet approved
-  const isPhasedOut = !!(course.replacedBy && !isApproved);
+  // A 2017 course is "phased out" only when it's genuinely retired for the
+  // current enrollment period — not merely because it has an equivalence
+  // mapping (most 2017 courses do, whether or not they're retired yet).
+  const isPhasedOut = !!(course.isRetiredForPeriod && !isApproved);
 
   return (
     <AnimatePresence>
