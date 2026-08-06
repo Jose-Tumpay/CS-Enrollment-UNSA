@@ -1,11 +1,16 @@
-import { useMemo } from 'react';
-import { CourseWithStatus, CourseStatus, Course, EnrollmentSummary } from '../types';
-import { courses2017 } from '../data/courses2017';
-import { courses2025 } from '../data/courses2025';
-import { equivalencias } from '../data/equivalencias';
-import { reprogramaciones } from '../data/reprogramaciones';
-import { ACADEMIC_RULES } from '../config/academicRules';
-import { useStudentStore } from './useStudentStore';
+import { useMemo } from "react";
+import {
+  CourseWithStatus,
+  CourseStatus,
+  Course,
+  EnrollmentSummary,
+} from "../types";
+import { courses2017 } from "../data/courses2017";
+import { courses2025 } from "../data/courses2025";
+import { equivalencias } from "../data/equivalencias";
+import { reprogramaciones } from "../data/reprogramaciones";
+import { ACADEMIC_RULES } from "../config/academicRules";
+import { useStudentStore } from "./useStudentStore";
 
 // ─── Lookup maps (module-level, created once) ─────────────────────────────────
 
@@ -24,8 +29,8 @@ for (const e of equivalencias) {
   }
 }
 
-const courseMap2017 = new Map(courses2017.map(c => [c.code, c]));
-const courseMap2025 = new Map(courses2025.map(c => [c.code, c]));
+const courseMap2017 = new Map(courses2017.map((c) => [c.code, c]));
+const courseMap2025 = new Map(courses2025.map((c) => [c.code, c]));
 
 /**
  * Expands a course code to the full set of codes that represent "the same
@@ -52,7 +57,7 @@ function expandCodeEquivalents(code: string): string[] {
   const c25 = equiv2017to2025.get(code);
   if (c25) result.add(c25);
   const c17arr = equiv2025to2017.get(code);
-  if (c17arr) c17arr.forEach(c => result.add(c));
+  if (c17arr) c17arr.forEach((c) => result.add(c));
   return [...result];
 }
 
@@ -74,8 +79,11 @@ function expandCodeEquivalents(code: string): string[] {
  *   Year 4: 2026 > 2027 → active
  *   Year 5: 2026 > 2028 → active
  */
-function is2017CourseRetiredForYear(course: Course, enrollmentYear: number): boolean {
-  if (course.plan !== '2017') return false;
+function is2017CourseRetiredForYear(
+  course: Course,
+  enrollmentYear: number,
+): boolean {
+  if (course.plan !== "2017") return false;
   return ACADEMIC_RULES.plan2017RetirementFormula(course.year, enrollmentYear);
 }
 
@@ -88,12 +96,10 @@ function getRescheduledSemester(
   enrollmentYear: number,
 ): { offeredSemester: 1 | 2; reason: string } | null {
   const match = reprogramaciones.find(
-    r =>
-      r.courseCode === courseCode &&
-      r.enrollmentYear === enrollmentYear,
+    (r) => r.courseCode === courseCode && r.enrollmentYear === enrollmentYear,
   );
   if (!match) return null;
-  return { offeredSemester: match.offeredSemester, reason: match.reason ?? '' };
+  return { offeredSemester: match.offeredSemester, reason: match.reason ?? "" };
 }
 
 /**
@@ -107,9 +113,13 @@ function getRescheduledSemester(
  *   cohortCareerYear = 2026 - 2025 + 1 = 2
  *   → years 3-5 not yet active for the 2025 cohort.
  */
-export function is2025CourseNotYetActive(course: Course, enrollmentYear: number): boolean {
-  if (course.plan !== '2025') return false;
-  const currentCohortYear = enrollmentYear - ACADEMIC_RULES.firstCohortPlan2025 + 1;
+export function is2025CourseNotYetActive(
+  course: Course,
+  enrollmentYear: number,
+): boolean {
+  if (course.plan !== "2025") return false;
+  const currentCohortYear =
+    enrollmentYear - ACADEMIC_RULES.firstCohortPlan2025 + 1;
   return course.year > currentCohortYear;
 }
 
@@ -121,7 +131,9 @@ function computeCourseStatus(
   isSimulated: boolean,
 ): CourseWithStatus {
   const isEffectivelyApproved = effectiveApproved.has(course.code);
-  const missingPrerequisites = course.prerequisites.filter(p => !effectiveApproved.has(p));
+  const missingPrerequisites = course.prerequisites.filter(
+    (p) => !effectiveApproved.has(p),
+  );
 
   const replacedByCode = hasPlan2025Replacement.has(course.code)
     ? equiv2017to2025.get(course.code)
@@ -132,13 +144,13 @@ function computeCourseStatus(
 
   let status: CourseStatus;
   if (isEffectivelyApproved) {
-    status = 'approved';
+    status = "approved";
   } else if (missingPrerequisites.length > 0) {
-    status = 'locked';
+    status = "locked";
   } else if (course.isElective) {
-    status = 'elective';
+    status = "elective";
   } else {
-    status = 'available';
+    status = "available";
   }
 
   return {
@@ -164,19 +176,24 @@ export function useCurriculumEngine() {
     const enrollSem = enrollmentTarget.semester;
 
     // ── 1. Active plan ────────────────────────────────────────────────────────
-    const activePlan = entryYear < ACADEMIC_RULES.firstCohortPlan2025 ? '2017' : '2025';
+    const activePlan =
+      entryYear < ACADEMIC_RULES.firstCohortPlan2025 ? "2017" : "2025";
 
     // ── 2. Student context ────────────────────────────────────────────────────
     // Career year the student is in during the enrollment period
-    const studentCareerYear = Math.max(1, Math.min(5, enrollYear - entryYear + 1));
+    const studentCareerYear = Math.max(
+      1,
+      Math.min(5, enrollYear - entryYear + 1),
+    );
 
     // For Plan 2017 students: which career years of the 2017 plan are still
     // being offered for the selected enrollment year?
     // Active years are those where the last cohort (2024) still has students.
     // Minimum active year = enrollYear - lastCohortPlan2017 + 1 = enrollYear - 2023
-    const activePlan2017CareerYears = ACADEMIC_RULES.activePlan2017CareerYears(enrollYear);
+    const activePlan2017CareerYears =
+      ACADEMIC_RULES.activePlan2017CareerYears(enrollYear);
     const retiredPlan2017CareerYears = [1, 2, 3, 4, 5].filter(
-      y => !activePlan2017CareerYears.includes(y),
+      (y) => !activePlan2017CareerYears.includes(y),
     );
 
     // ── 3. Cross-plan effective approvals ─────────────────────────────────────
@@ -192,7 +209,7 @@ export function useCurriculumEngine() {
       const c25 = equiv2017to2025.get(code);
       if (c25) effectiveApproved.add(c25);
       const c17arr = equiv2025to2017.get(code);
-      if (c17arr) c17arr.forEach(c => effectiveApproved.add(c));
+      if (c17arr) c17arr.forEach((c) => effectiveApproved.add(c));
     }
 
     const simulatedSet = new Set(profile.simulatedCourses);
@@ -222,7 +239,7 @@ export function useCurriculumEngine() {
 
     let resolvedCourses: Course[];
 
-    if (activePlan === '2017') {
+    if (activePlan === "2017") {
       const kept2017: Course[] = [];
 
       for (const c of courses2017) {
@@ -253,45 +270,69 @@ export function useCurriculumEngine() {
       }
 
       const injected2025: Course[] = Array.from(injected2025Codes)
-        .map(code => courseMap2025.get(code))
+        .map((code) => courseMap2025.get(code))
         .filter((c): c is Course => !!c);
 
-      resolvedCourses = [...kept2017, ...injected2025];
+      const active2025Courses: Course[] = courses2025.filter(
+        (c) => !is2025CourseNotYetActive(c, enrollYear),
+      );
+
+      const mergedCourses: Course[] = [];
+      const seenCodes = new Set<string>();
+
+      for (const course of [
+        ...kept2017,
+        ...injected2025,
+        ...active2025Courses,
+      ]) {
+        if (seenCodes.has(course.code)) continue;
+        seenCodes.add(course.code);
+        mergedCourses.push(course);
+      }
+
+      resolvedCourses = mergedCourses;
     } else {
       resolvedCourses = [...courses2025];
     }
 
     // ── 5. Compute per-course status ──────────────────────────────────────────
-    const coursesWithStatus: CourseWithStatus[] = resolvedCourses.map(course => {
-      const isSimulated = simulatedSet.has(course.code);
-      const result = computeCourseStatus(course, effectiveApproved, isSimulated);
+    const coursesWithStatus: CourseWithStatus[] = resolvedCourses.map(
+      (course) => {
+        const isSimulated = simulatedSet.has(course.code);
+        const result = computeCourseStatus(
+          course,
+          effectiveApproved,
+          isSimulated,
+        );
 
-      // Mark if it's retired for this enrollment period (Plan 2017 course,
-      // not yet approved, and the 2017 plan year has been phased out)
-      const isRetiredForPeriod = is2017CourseRetiredForYear(course, enrollYear) &&
-        !effectiveApproved.has(course.code);
+        // Mark if it's retired for this enrollment period (Plan 2017 course,
+        // not yet approved, and the 2017 plan year has been phased out)
+        const isRetiredForPeriod =
+          is2017CourseRetiredForYear(course, enrollYear) &&
+          !effectiveApproved.has(course.code);
 
-      // Plan 2017 course retired with NO official 2025 equivalent
-      const noEquivalenceAvailable = retiredNoEquivCodes.has(course.code);
+        // Plan 2017 course retired with NO official 2025 equivalent
+        const noEquivalenceAvailable = retiredNoEquivCodes.has(course.code);
 
-      // Plan 2025 course injected to replace a retired 2017 course
-      const isInjectedEquivalent = injected2025Codes.has(course.code);
-      const replacesEquiv2017Codes = isInjectedEquivalent
-        ? (injected2025To2017.get(course.code) ?? [])
-        : undefined;
-      const replacesEquiv2017Names = replacesEquiv2017Codes?.map(
-        c => courseMap2017.get(c)?.name ?? c,
-      );
+        // Plan 2025 course injected to replace a retired 2017 course
+        const isInjectedEquivalent = injected2025Codes.has(course.code);
+        const replacesEquiv2017Codes = isInjectedEquivalent
+          ? (injected2025To2017.get(course.code) ?? [])
+          : undefined;
+        const replacesEquiv2017Names = replacesEquiv2017Codes?.map(
+          (c) => courseMap2017.get(c)?.name ?? c,
+        );
 
-      return {
-        ...result,
-        isRetiredForPeriod,
-        noEquivalenceAvailable,
-        isInjectedEquivalent,
-        replacesEquiv2017Codes,
-        replacesEquiv2017Names,
-      };
-    });
+        return {
+          ...result,
+          isRetiredForPeriod,
+          noEquivalenceAvailable,
+          isInjectedEquivalent,
+          replacesEquiv2017Codes,
+          replacesEquiv2017Names,
+        };
+      },
+    );
 
     // ── 6. Enrollment availability ────────────────────────────────────────────
     //
@@ -302,30 +343,33 @@ export function useCurriculumEngine() {
     //   4. Check semester match (or reprogramación override)
     //   5. All checks pass → availableForEnrollment = true
 
-    const coursesWithEnrollment: CourseWithStatus[] = coursesWithStatus.map(course => {
-      if (course.status === 'approved') {
-        return { ...course, availableForEnrollment: false };
-      }
-      if ((course.missingPrerequisites?.length ?? 0) > 0) {
-        return { ...course, availableForEnrollment: false };
-      }
-      // Retired Plan 2017 course kept only as approved history — not enrollable
-      if (course.isRetiredForPeriod) {
-        return { ...course, availableForEnrollment: false };
-      }
+    const coursesWithEnrollment: CourseWithStatus[] = coursesWithStatus.map(
+      (course) => {
+        if (course.status === "approved") {
+          return { ...course, availableForEnrollment: false };
+        }
+        if ((course.missingPrerequisites?.length ?? 0) > 0) {
+          return { ...course, availableForEnrollment: false };
+        }
+        // Retired Plan 2017 course kept only as approved history — not enrollable
+        if (course.isRetiredForPeriod) {
+          return { ...course, availableForEnrollment: false };
+        }
 
-      // Check if it's in the target semester (or rescheduled to it)
-      const reschedule = getRescheduledSemester(course.code, enrollYear);
-      const isRescheduled = reschedule !== null && reschedule.offeredSemester === enrollSem;
-      const inTargetSemester = course.semester === enrollSem || isRescheduled;
+        // Check if it's in the target semester (or rescheduled to it)
+        const reschedule = getRescheduledSemester(course.code, enrollYear);
+        const isRescheduled =
+          reschedule !== null && reschedule.offeredSemester === enrollSem;
+        const inTargetSemester = course.semester === enrollSem || isRescheduled;
 
-      return {
-        ...course,
-        availableForEnrollment: inTargetSemester,
-        isRescheduled,
-        rescheduledReason: isRescheduled ? reschedule?.reason : undefined,
-      };
-    });
+        return {
+          ...course,
+          availableForEnrollment: inTargetSemester,
+          isRescheduled,
+          rescheduledReason: isRescheduled ? reschedule?.reason : undefined,
+        };
+      },
+    );
 
     // ── 7. Progress statistics ────────────────────────────────────────────────
     let totalCredits = 0;
@@ -341,33 +385,42 @@ export function useCurriculumEngine() {
       }
     }
 
-    const progressPercentage = totalCredits > 0 ? (approvedCredits / totalCredits) * 100 : 0;
+    const progressPercentage =
+      totalCredits > 0 ? (approvedCredits / totalCredits) * 100 : 0;
 
     // ── 8. Full plan views (for "Ver sílabo completo") ────────────────────────
-    const fullCourses2017: CourseWithStatus[] = courses2017.map(c => {
+    const fullCourses2017: CourseWithStatus[] = courses2017.map((c) => {
       const isSimulated = simulatedSet.has(c.code);
       const result = computeCourseStatus(c, effectiveApproved, isSimulated);
-      const isRetiredForPeriod = is2017CourseRetiredForYear(c, enrollYear) && !effectiveApproved.has(c.code);
+      const isRetiredForPeriod =
+        is2017CourseRetiredForYear(c, enrollYear) &&
+        !effectiveApproved.has(c.code);
       return { ...result, isRetiredForPeriod };
     });
 
-    const fullCourses2025: CourseWithStatus[] = courses2025.map(c => {
+    const fullCourses2025: CourseWithStatus[] = courses2025.map((c) => {
       const isSimulated = simulatedSet.has(c.code);
       return computeCourseStatus(c, effectiveApproved, isSimulated);
     });
 
     // ── 9. Bottleneck detection ───────────────────────────────────────────────
-    const getDescendants = (code: string, visited = new Set<string>()): Set<string> => {
+    const getDescendants = (
+      code: string,
+      visited = new Set<string>(),
+    ): Set<string> => {
       if (visited.has(code)) return visited;
       visited.add(code);
       const equivalents = expandCodeEquivalents(code);
       for (const c of coursesWithEnrollment) {
-        if (c.prerequisites.some(p => equivalents.includes(p))) getDescendants(c.code, visited);
+        if (c.prerequisites.some((p) => equivalents.includes(p)))
+          getDescendants(c.code, visited);
       }
       return visited;
     };
 
-    const nonApproved = coursesWithEnrollment.filter(c => !effectiveApproved.has(c.code));
+    const nonApproved = coursesWithEnrollment.filter(
+      (c) => !effectiveApproved.has(c.code),
+    );
     let maxDownstream = 0;
     const downstreamCounts: Record<string, number> = {};
 
@@ -378,46 +431,54 @@ export function useCurriculumEngine() {
     }
 
     const bottleneckCourses = nonApproved.filter(
-      c => downstreamCounts[c.code] === maxDownstream && maxDownstream > 0,
+      (c) => downstreamCounts[c.code] === maxDownstream && maxDownstream > 0,
     );
 
     // ── 10. Progress by year / semester ───────────────────────────────────────
-    const progressByYear = [1, 2, 3, 4, 5].map(yr => {
-      const yrCourses = coursesWithEnrollment.filter(c => c.year === yr);
-      const approved = yrCourses.filter(c => effectiveApproved.has(c.code));
+    const progressByYear = [1, 2, 3, 4, 5].map((yr) => {
+      const yrCourses = coursesWithEnrollment.filter((c) => c.year === yr);
+      const approved = yrCourses.filter((c) => effectiveApproved.has(c.code));
       return {
         year: yr,
         total: yrCourses.length,
         approved: approved.length,
-        percentage: yrCourses.length > 0 ? (approved.length / yrCourses.length) * 100 : 0,
+        percentage:
+          yrCourses.length > 0 ? (approved.length / yrCourses.length) * 100 : 0,
       };
     });
 
-    const progressBySemester = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(sem => {
+    const progressBySemester = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((sem) => {
       const yr = Math.ceil(sem / 2);
       const s: 1 | 2 = sem % 2 === 0 ? 2 : 1;
-      const semCourses = coursesWithEnrollment.filter(c => c.year === yr && c.semester === s);
-      const approved = semCourses.filter(c => effectiveApproved.has(c.code));
+      const semCourses = coursesWithEnrollment.filter(
+        (c) => c.year === yr && c.semester === s,
+      );
+      const approved = semCourses.filter((c) => effectiveApproved.has(c.code));
       return {
         semester: sem,
-        name: `${yr}-${s === 1 ? 'A' : 'B'}`,
+        name: `${yr}-${s === 1 ? "A" : "B"}`,
         total: semCourses.length,
         approved: approved.length,
-        percentage: semCourses.length > 0 ? (approved.length / semCourses.length) * 100 : 0,
+        percentage:
+          semCourses.length > 0
+            ? (approved.length / semCourses.length) * 100
+            : 0,
       };
     });
 
     // ── 11. Estimated semesters remaining ──────────────────────────────────────
     const getLongestPath = (code: string): number => {
       const children = coursesWithEnrollment.filter(
-        c => c.prerequisites.includes(code) && !effectiveApproved.has(c.code),
+        (c) => c.prerequisites.includes(code) && !effectiveApproved.has(c.code),
       );
       if (children.length === 0) return 1;
-      return 1 + Math.max(...children.map(c => getLongestPath(c.code)));
+      return 1 + Math.max(...children.map((c) => getLongestPath(c.code)));
     };
 
     const availableNow = coursesWithEnrollment.filter(
-      c => !effectiveApproved.has(c.code) && (c.missingPrerequisites?.length ?? 0) === 0,
+      (c) =>
+        !effectiveApproved.has(c.code) &&
+        (c.missingPrerequisites?.length ?? 0) === 0,
     );
     let longestPath = 0;
     for (const c of availableNow) {
@@ -431,19 +492,24 @@ export function useCurriculumEngine() {
     );
 
     // ── 12. Enrollment summary (for Simulator) ────────────────────────────────
-    const selectedCourseObjs = coursesWithEnrollment.filter(c =>
+    const selectedCourseObjs = coursesWithEnrollment.filter((c) =>
       simulatedSet.has(c.code),
     );
-    const simulatedCredits = selectedCourseObjs.reduce((s, c) => s + c.credits, 0);
+    const simulatedCredits = selectedCourseObjs.reduce(
+      (s, c) => s + c.credits,
+      0,
+    );
     const willUnlock = coursesWithEnrollment.filter(
-      c =>
-        c.status === 'locked' &&
-        c.missingPrerequisites?.every(p => {
+      (c) =>
+        c.status === "locked" &&
+        c.missingPrerequisites?.every((p) => {
           const equivalents = expandCodeEquivalents(p);
           return (
-            equivalents.some(eq => profile.simulatedCourses.includes(eq)) ||
+            equivalents.some((eq) => profile.simulatedCourses.includes(eq)) ||
             equivalents.some(
-              eq => coursesWithEnrollment.find(x => x.code === eq)?.status === 'approved',
+              (eq) =>
+                coursesWithEnrollment.find((x) => x.code === eq)?.status ===
+                "approved",
             )
           );
         }),
@@ -452,23 +518,26 @@ export function useCurriculumEngine() {
     const enrollmentSummary: EnrollmentSummary = {
       selectedCourses: selectedCourseObjs,
       totalCredits: simulatedCredits,
-      isUnderMinimum: profile.simulatedCourses.length > 0 &&
+      isUnderMinimum:
+        profile.simulatedCourses.length > 0 &&
         simulatedCredits < ACADEMIC_RULES.minCreditsPerSemester,
       isOverMaximum: simulatedCredits > ACADEMIC_RULES.maxCreditsPerSemester,
       creditWarning:
         simulatedCredits > ACADEMIC_RULES.maxCreditsPerSemester
           ? `Excedes el máximo de ${ACADEMIC_RULES.maxCreditsPerSemester} créditos.`
           : profile.simulatedCourses.length > 0 &&
-            simulatedCredits < ACADEMIC_RULES.minCreditsPerSemester
-          ? `Estás por debajo del mínimo de ${ACADEMIC_RULES.minCreditsPerSemester} créditos.`
-          : null,
+              simulatedCredits < ACADEMIC_RULES.minCreditsPerSemester
+            ? `Estás por debajo del mínimo de ${ACADEMIC_RULES.minCreditsPerSemester} créditos.`
+            : null,
       willUnlock,
     };
 
     // ── 13. Helper: what does approving `code` unlock? ────────────────────────
     const unlockedBy = (courseCode: string): CourseWithStatus[] => {
       const equivalents = expandCodeEquivalents(courseCode);
-      return coursesWithEnrollment.filter(c => c.prerequisites.some(p => equivalents.includes(p)));
+      return coursesWithEnrollment.filter((c) =>
+        c.prerequisites.some((p) => equivalents.includes(p)),
+      );
     };
 
     return {
