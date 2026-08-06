@@ -2,6 +2,8 @@
 
 ¡Gracias por querer mejorar esta herramienta para los estudiantes de CS-UNSA!
 
+Al participar en este proyecto, aceptas seguir nuestro [Código de Conducta](CODE_OF_CONDUCT.md).
+
 ## Antes de empezar
 
 1. **Lee el README** para entender cómo funciona el proyecto.
@@ -38,7 +40,8 @@ Si encontraste un error en prerrequisitos, créditos, o equivalencias, puedes co
 2. Crea una rama descriptiva: `git checkout -b fix/prereq-curso-1702224` o `feat/comparador-planes`
 3. Haz tus cambios
 4. Verifica que TypeScript compile sin errores: `npm run typecheck`
-5. Abre un Pull Request describiendo el cambio y su motivación
+5. Verifica que el proyecto compile: `npm run build`
+6. Abre un Pull Request describiendo el cambio y su motivación (usa la plantilla que aparece automáticamente)
 
 ---
 
@@ -59,21 +62,23 @@ El motor decide si un curso está disponible siguiendo este orden:
 
 Aprobar un curso en cualquiera de los dos planes marca automáticamente su equivalente como aprobado. Esto se maneja en `effectiveApproved` dentro del motor.
 
+**Nota para quien toque `unlockedBy` o cualquier cálculo de "qué desbloquea este curso":** compara siempre a través de la frontera de equivalencia, no solo por código literal (`===`). Un curso activo puede tener como prerrequisito un curso ya retirado, y viceversa.
+
 ---
 
 ## Preguntas frecuentes para contribuidores
 
-**¿Por qué `lastCohortPlan2017 = 2024`?**  
+**¿Por qué `lastCohortPlan2017 = 2024`?**
 Porque 2024 fue el último año en que se abrió admisión para el Sílabo 2017. La fórmula de retiro depende de este valor.
 
-**¿Cómo agrego una reprogramación?**  
+**¿Cómo agrego una reprogramación?**
 Agrega una entrada en `reprogramaciones.ts` con el código del curso, el año de matrícula y el semestre en que se reprograma. El motor la detecta automáticamente.
 
-**¿Cómo agrego una equivalencia nueva?**  
+**¿Cómo agrego una equivalencia nueva?**
 Edita `equivalencias.ts`. El formato es `{ plan2025Code: 'XXXX', plan2017Codes: ['YYYY'] }`. Las equivalencias son bidireccionales: no necesitas agregar el mapeo inverso.
 
 ---
 
-## Código de conducta
+## Sobre los datos académicos
 
-Este proyecto es para estudiantes de CS-UNSA. Sé respetuoso, constructivo y recuerda que los datos académicos incorrectos afectan a tus compañeros. Cita siempre la fuente oficial cuando corrijas datos.
+Este proyecto no es oficial ni está afiliado a la UNSA. Toda corrección de datos (créditos, prerrequisitos, equivalencias, reprogramaciones) debe estar respaldada por una fuente oficial verificable (resolución, sílabo publicado, comunicado de la Escuela Profesional). Cita esa fuente en tu Pull Request — los datos académicos incorrectos afectan la matrícula real de tus compañeros.

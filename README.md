@@ -1,10 +1,32 @@
 # Malla Curricular CS — UNSA
 
-**Sistema Inteligente de Planificación de Matrícula**  
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](package.json)
+
+**Sistema Inteligente de Planificación de Matrícula**
 Escuela Profesional de Ciencia de la Computación — Universidad Nacional de San Agustín, Arequipa
 
 Una aplicación web que ayuda a los estudiantes a planificar su matrícula considerando el cambio de currícula entre el **Sílabo 2017** y el **Sílabo 2025**, las equivalencias entre ambos planes, el retiro progresivo de cursos y las reprogramaciones oficiales.
 
+<!-- 🔗 Reemplaza esto con tu link real cuando lo despliegues (Vercel/Netlify/GitHub Pages) -->
+**[▶ Ver demo en vivo](#)** · [Reportar un bug](../../issues/new?labels=bug) · [Pedir una función](../../issues/new?labels=enhancement)
+
+<!-- 🖼 Muy recomendado: agrega aquí un screenshot o GIF corto de la app.
+     ![Vista de la malla](docs/screenshot-malla.png) -->
+
+---
+
+## Tabla de contenidos
+
+- [¿Qué hace?](#qué-hace)
+- [Stack tecnológico](#stack-tecnológico)
+- [Estructura del proyecto](#estructura-del-proyecto)
+- [Ejecutar localmente](#ejecutar-localmente)
+- [Cómo contribuir](#cómo-contribuir)
+- [Lógica del retiro progresivo del Sílabo 2017](#lógica-del-retiro-progresivo-del-sílabo-2017)
+- [Preguntas frecuentes](#preguntas-frecuentes)
+- [Licencia](#licencia)
 
 ---
 
@@ -21,15 +43,15 @@ Una aplicación web que ayuda a los estudiantes a planificar su matrícula consi
 
 ## Stack tecnológico
 
-| Capa | Tecnología |
-|------|-----------|
-| Framework | React 18 + TypeScript |
-| Bundler | Vite |
-| Estilos | Tailwind CSS v4 |
-| Animaciones | Framer Motion |
-| Iconos | Lucide React |
-| Routing | Wouter |
-| Estado | React Context + `localStorage` |
+| Capa        | Tecnología                     |
+| ----------- | ------------------------------- |
+| Framework   | React 18 + TypeScript          |
+| Bundler     | Vite                            |
+| Estilos     | Tailwind CSS v4                |
+| Animaciones | Framer Motion                  |
+| Iconos      | Lucide React                   |
+| Routing     | Wouter                          |
+| Estado      | React Context + `localStorage` |
 
 ---
 
@@ -65,7 +87,7 @@ src/
 
 ## Ejecutar localmente
 
-Requiere **Node.js 18+**.
+Requiere **Node.js 18+** y npm.
 
 ```bash
 # Clonar el repositorio
@@ -79,13 +101,21 @@ npm install
 npm run dev
 ```
 
-La app estará disponible en `http://localhost:<puerto>/`.
+La app estará disponible en `http://localhost:<puerto>/` (Vite lo indica en la consola).
+
+Otros comandos útiles:
+
+```bash
+npm run build      # build de producción
+npm run serve      # sirve el build de producción localmente
+npm run typecheck  # verifica que TypeScript compile sin errores
+```
 
 ---
 
 ## Cómo contribuir
 
-¡Las contribuciones son bienvenidas! Lee [CONTRIBUTING.md](CONTRIBUTING.md) para saber cómo empezar.
+¡Las contribuciones son bienvenidas! Lee [CONTRIBUTING.md](CONTRIBUTING.md) para la guía completa y [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) para las normas de la comunidad.
 
 Las áreas donde más se necesita ayuda:
 
@@ -93,6 +123,8 @@ Las áreas donde más se necesita ayuda:
 - **Bugs**: reportar o corregir comportamientos incorrectos del motor curricular
 - **UI/UX**: mejorar la interfaz, accesibilidad y experiencia móvil
 - **Nuevas funciones**: ver las [issues abiertas](../../issues)
+
+No necesitas ser un experto en el proyecto para contribuir — corregir un dato de un curso o reportar un bug con buenos pasos de reproducción ya ayuda muchísimo.
 
 ---
 
@@ -106,6 +138,18 @@ La cohorte 2024 es la última del Sílabo 2017. Su progresión determina qué a�
 - Año académico 2029 → el Sílabo 2017 queda completamente retirado
 
 Fórmula: un curso del año `N` se retira cuando `añoDeMatrícula > 2023 + N`.
+
+---
+
+## Preguntas frecuentes
+
+**¿Mis datos de matrícula se guardan en algún servidor?**
+No. Todo se guarda en `localStorage` de tu navegador; nadie más tiene acceso a esa información.
+
+**¿Es una herramienta oficial de la UNSA?**
+No, es un proyecto independiente hecho por y para estudiantes. Ante cualquier duda oficial sobre tu matrícula, confirma siempre con la Escuela Profesional o la Oficina de Registros Académicos.
+
+**Más preguntas** están respondidas dentro de la app, en la sección "Ayuda".
 
 ---
 
