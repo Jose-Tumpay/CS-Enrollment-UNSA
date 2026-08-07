@@ -72,20 +72,24 @@ export function Simulador() {
 
   // ── Course lists ────────────────────────────────────────────────────────────
 
+  // Sort ascending by (year, semester): años inferiores primero.
+  const byYearSemester = (a: CourseWithStatus, b: CourseWithStatus) =>
+    a.year - b.year || a.semester - b.semester;
+
   // All courses available for enrollment this semester
   const availableForSemester = engine.courses.filter(
     (c) => c.availableForEnrollment,
   );
 
   // Regular courses: Plan 2017 courses still being offered, or Plan 2025 native courses
-  const regularCourses = availableForSemester.filter(
-    (c) => !c.isInjectedEquivalent,
-  );
+  const regularCourses = availableForSemester
+    .filter((c) => !c.isInjectedEquivalent)
+    .sort(byYearSemester);
 
   // Plan 2025 equivalents injected for Plan 2017 students (replacements for retired courses)
-  const injectedEquivalents = availableForSemester.filter(
-    (c) => c.isInjectedEquivalent,
-  );
+  const injectedEquivalents = availableForSemester
+    .filter((c) => c.isInjectedEquivalent)
+    .sort(byYearSemester);
 
   // Rescheduled courses (for the notice banner)
   const rescheduledCourses = availableForSemester.filter(
@@ -93,26 +97,36 @@ export function Simulador() {
   );
 
   // Retired 2017 courses with NO official 2025 equivalent — student is stuck
-  const noEquivCourses =
+  const noEquivCourses = (
     engine.activePlan === "2017"
       ? engine.courses.filter((c) => c.noEquivalenceAvailable === true)
-      : [];
+      : []
+  ).sort(byYearSemester);
 
   // Courses locked by missing prerequisites (correct semester, but blocked)
-  const lockedThisSemester = engine.courses.filter(
-    (c) =>
-      c.semester === target.semester &&
-      c.status !== "approved" &&
-      !c.availableForEnrollment &&
-      (c.missingPrerequisites?.length ?? 0) > 0,
-  );
+  const lockedThisSemester = engine.courses
+    .filter(
+      (c) =>
+        c.semester === target.semester &&
+        c.status !== "approved" &&
+        !c.availableForEnrollment &&
+        (c.missingPrerequisites?.length ?? 0) > 0,
+    )
+    .sort(byYearSemester);
 
-  const wrongSemesterAvailable = engine.courses.filter(
-    (c) =>
-      c.status === "available" &&
-      c.semester !== target.semester &&
-      !c.isRescheduled,
-  );
+  // Courses whose prerequisites ARE met, but that are normally taught in the
+  // OTHER semester (A/B) this period — candidates for a manual "reprogramación"
+  // enrollment (student has special authorization to take it out of its usual
+  // semester). Prerequisites are still enforced: only status === 'available'
+  // courses qualify, same gate as the regular enrollment list.
+  const reprogramacionCandidates = engine.courses
+    .filter(
+      (c) =>
+        c.status === "available" &&
+        c.semester !== target.semester &&
+        !c.isRescheduled,
+    )
+    .sort(byYearSemester);
 
   // ── Credit bar ──────────────────────────────────────────────────────────────
   const {
@@ -497,28 +511,71 @@ export function Simulador() {
             </div>
           )}
 
-          {/* ── Other semester info ────────────────────────────────────────── */}
-          {wrongSemesterAvailable.length > 0 && (
-            <div className="bg-muted/30 border border-border rounded-xl p-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-2">
-                <AlertTriangle className="w-4 h-4" />
-                {wrongSemesterAvailable.length} cursos disponibles en Semestre{" "}
-                {target.semester === 1 ? "B" : "A"} (no este periodo)
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {wrongSemesterAvailable.slice(0, 10).map((c) => (
-                  <span
-                    key={c.code}
-                    className="text-xs bg-background border border-border px-2 py-1 rounded font-mono opacity-70"
-                  >
-                    {c.code}
-                  </span>
-                ))}
-                {wrongSemesterAvailable.length > 10 && (
-                  <span className="text-xs text-muted-foreground px-2 py-1">
-                    +{wrongSemesterAvailable.length - 10} más
-                  </span>
-                )}
+          {/* ── Section 4: Matrícula por reprogramación (manual) ──────────── */}
+          {reprogramacionCandidates.length > 0 && (
+            <div>
+              <h2 className="text-xl font-bold border-b border-border pb-2 mb-1 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <RefreshCw className="w-5 h-5 shrink-0" />
+                Matrícula por reprogramación
+                <span className="text-sm font-normal text-muted-foreground">
+                  ({reprogramacionCandidates.length})
+                </span>
+              </h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                Estos cursos normalmente se dictan en Semestre{" "}
+                {target.semester === 1 ? "B" : "A"}, no en este periodo, pero ya
+                cumples sus prerrequisitos. Solo agrégalos aquí si cuentas con
+                autorización de la Escuela Profesional para llevarlos fuera de
+                su semestre habitual (reprogramación extraordinaria).
+              </p>
+              <div className="space-y-2">
+                {reprogramacionCandidates.map((course) => {
+                  const isSelected = profile.simulatedCourses.includes(
+                    course.code,
+                  );
+                  return (
+                    <label
+                      key={course.code}
+                      className={`flex items-center gap-4 p-3 rounded-xl border cursor-pointer transition-all ${
+                        isSelected
+                          ? "bg-primary/10 border-primary ring-1 ring-primary"
+                          : "bg-card border-amber-500/30 hover:border-amber-500/60 hover:bg-muted/50"
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 shrink-0 rounded border flex items-center justify-center transition-colors ${
+                          isSelected
+                            ? "bg-primary border-primary text-primary-foreground"
+                            : "border-border"
+                        }`}
+                      >
+                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleCourseSimulated(course.code)}
+                        className="hidden"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="font-mono text-[10px] text-muted-foreground font-semibold block mb-0.5">
+                          {course.code}
+                        </span>
+                        <h3 className="font-bold text-sm truncate">
+                          {course.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          Año {course.year} — Sem{" "}
+                          {course.semester === 1 ? "A" : "B"} (fuera de este
+                          periodo)
+                        </p>
+                      </div>
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-background border border-border shrink-0">
+                        {course.credits} cr
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           )}
