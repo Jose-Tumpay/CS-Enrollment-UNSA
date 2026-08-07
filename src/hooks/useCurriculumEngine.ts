@@ -55,21 +55,6 @@ const idealCreditsPerSemester2025 = computeIdealCreditsBySemester(courses2025);
  * Expands a course code to the full set of codes that represent "the same
  * requirement" across both plans: itself, plus its direct 2017↔2025
  * equivalent(s) if any exist.
- *
- * Why this is needed: when a Plan 2017 course is retired and injected as its
- * 2025 replacement in the resolved course list, courses that still list the
- * OLD 2017 code as a prerequisite are not automatically rewritten. Direct
- * string comparison (`prerequisites.includes(code)`) then fails to link the
- * injected replacement to the courses it actually unlocks. Any graph
- * traversal over `prerequisites` (unlockedBy, bottleneck detection, the
- * simulator's "willUnlock" preview) must match through this expanded set,
- * not raw code equality — otherwise it silently under-reports downstream
- * impact for every course sitting right at the plan-2017/plan-2025
- * substitution boundary (which is common: any active year's prerequisites
- * usually live in the year just before it, and that year is often already
- * retired). The core "can I enroll" gate is unaffected by this, since it
- * already checks `effectiveApproved`, which is built with the same
- * expansion.
  */
 function expandCodeEquivalents(code: string): string[] {
   const result = new Set([code]);
@@ -85,18 +70,6 @@ function expandCodeEquivalents(code: string): string[] {
 /**
  * Determines whether a Plan 2017 course is still being offered for a given
  * enrollment year, based on the progressive implementation of Plan 2025.
- *
- * The 2024 cohort (last Plan 2017 cohort) started year 1 in 2024.
- * Their progression: Year N → academic year 2024 + (N-1) = 2023 + N
- *
- * A Plan 2017 Year-N course is retired when enrollmentYear > 2023 + N.
- *
- * Example (enrollmentYear = 2026):
- *   Year 1: 2026 > 2024 → retired  (no 2017 student is in year 1)
- *   Year 2: 2026 > 2025 → retired  (no 2017 student is in year 2)
- *   Year 3: 2026 > 2026 → active   (2024 cohort is in year 3)
- *   Year 4: 2026 > 2027 → active
- *   Year 5: 2026 > 2028 → active
  */
 function is2017CourseRetiredForYear(
   course: Course,
@@ -124,13 +97,6 @@ function getRescheduledSemester(
 /**
  * Returns true when a Plan 2025 course doesn't have a 2025-cohort class yet
  * for the given enrollment year.
- *
- * The 2025 cohort started year 1 in 2025 (when they enrolled).
- * cohortCareerYear = enrollmentYear - firstCohortPlan2025 + 1
- *
- * Example — enrollmentYear 2026:
- *   cohortCareerYear = 2026 - 2025 + 1 = 2
- *   → years 3-5 not yet active for the 2025 cohort.
  */
 export function is2025CourseNotYetActive(
   course: Course,
@@ -199,16 +165,11 @@ export function useCurriculumEngine() {
       entryYear < ACADEMIC_RULES.firstCohortPlan2025 ? "2017" : "2025";
 
     // ── 2. Student context ────────────────────────────────────────────────────
-    // Career year the student is in during the enrollment period
     const studentCareerYear = Math.max(
       1,
       Math.min(5, enrollYear - entryYear + 1),
     );
 
-    // For Plan 2017 students: which career years of the 2017 plan are still
-    // being offered for the selected enrollment year?
-    // Active years are those where the last cohort (2024) still has students.
-    // Minimum active year = enrollYear - lastCohortPlan2017 + 1 = enrollYear - 2023
     const activePlan2017CareerYears =
       ACADEMIC_RULES.activePlan2017CareerYears(enrollYear);
     const retiredPlan2017CareerYears = [1, 2, 3, 4, 5].filter(
@@ -216,7 +177,6 @@ export function useCurriculumEngine() {
     );
 
     // ── 3. Cross-plan effective approvals ─────────────────────────────────────
-    // Approving one side of an equivalency automatically approves the other.
     const directApproved = new Set([
       ...profile.approvedCourses,
       ...profile.simulatedCourses,
@@ -233,69 +193,33 @@ export function useCurriculumEngine() {
 
     const simulatedSet = new Set(profile.simulatedCourses);
 
-    // ── 4. Resolve student's course list (smart substitution) ─────────────────
-    //
-    // Decision order for Plan 2017 students:
-    //   a) Is the course still offered for enrollYear? (activePlan2017CareerYears)
-    //   b) If NOT offered AND not yet approved → inject 2025 equivalent
-    //   c) If NOT offered BUT already approved → keep as approved history
-    //   d) If NO 2025 equivalent exists → keep but mark unavailable
-    //
-    // For Plan 2025 students: use Plan 2025 courses directly.
+    // ── 4. Resolve BOTH plans' active courses ─────────────────────────────────
+    // Show all active 2017 courses (including retired-but-approved as history)
+    // AND all active 2025 courses (cohort already reached that year).
 
-    const injected2025Codes = new Set<string>();
-    /**
-     * Maps each injected 2025 code → the array of 2017 codes it replaces.
-     * A single 2025 course can replace more than one 2017 course.
-     */
-    const injected2025To2017 = new Map<string, string[]>();
-    /**
-     * 2017 course codes that are retired for this enrollment year AND have
-     * no official equivalent in Plan 2025. Students are stuck until an
-     * extraordinary reprogramación or academic disposition is issued.
-     */
-    const retiredNoEquivCodes = new Set<string>();
+    const kept2017: Course[] = [];
+    for (const c of courses2017) {
+      const isRetired = is2017CourseRetiredForYear(c, enrollYear);
+      const alreadyApproved = effectiveApproved.has(c.code);
 
-    let resolvedCourses: Course[];
-
-    if (activePlan === "2017") {
-      const kept2017: Course[] = [];
-
-      for (const c of courses2017) {
-        const isRetired = is2017CourseRetiredForYear(c, enrollYear);
-        const alreadyApproved = effectiveApproved.has(c.code);
-
-        if (!isRetired) {
-          // Still being offered — keep as-is
-          kept2017.push(c);
-        } else if (alreadyApproved) {
-          // Retired but student already passed it — keep as approved history
-          kept2017.push(c);
-        } else {
-          // Retired and not yet approved → inject 2025 equivalent (if exists)
-          const code2025 = equiv2017to2025.get(c.code);
-          if (code2025) {
-            injected2025Codes.add(code2025);
-            // Record which 2017 course(s) this 2025 code replaces
-            const existing = injected2025To2017.get(code2025) ?? [];
-            existing.push(c.code);
-            injected2025To2017.set(code2025, existing);
-          } else {
-            // No equivalent: keep original but it'll be unavailable for enrollment
-            kept2017.push(c);
-            retiredNoEquivCodes.add(c.code);
-          }
-        }
+      if (!isRetired) {
+        kept2017.push(c);
+      } else if (alreadyApproved) {
+        // Retired but passed — keep as history (not enrollable)
+        kept2017.push(c);
       }
-
-      const injected2025: Course[] = Array.from(injected2025Codes)
-        .map((code) => courseMap2025.get(code))
-        .filter((c): c is Course => !!c);
-
-      resolvedCourses = [...kept2017, ...injected2025];
-    } else {
-      resolvedCourses = [...courses2025];
+      // Retired & not approved: omitted
     }
+
+    const kept2025: Course[] = [];
+    for (const c of courses2025) {
+      const notYetActive = is2025CourseNotYetActive(c, enrollYear);
+      if (!notYetActive) {
+        kept2025.push(c);
+      }
+    }
+
+    const resolvedCourses: Course[] = [...kept2017, ...kept2025];
 
     // ── 5. Compute per-course status ──────────────────────────────────────────
     const coursesWithStatus: CourseWithStatus[] = resolvedCourses.map(
@@ -307,20 +231,13 @@ export function useCurriculumEngine() {
           isSimulated,
         );
 
-        // Mark if it's retired for this enrollment period (Plan 2017 course,
-        // not yet approved, and the 2017 plan year has been phased out)
         const isRetiredForPeriod =
+          course.plan === "2017" &&
           is2017CourseRetiredForYear(course, enrollYear) &&
           !effectiveApproved.has(course.code);
 
-        // Plan 2017 course retired with NO official 2025 equivalent
-        const noEquivalenceAvailable = retiredNoEquivCodes.has(course.code);
-
-        // Plan 2025 course injected to replace a retired 2017 course
-        const isInjectedEquivalent = injected2025Codes.has(course.code);
-        const replacesEquiv2017Codes = isInjectedEquivalent
-          ? (injected2025To2017.get(course.code) ?? [])
-          : undefined;
+        // For 2025 courses: which 2017 codes does this replace?
+        const replacesEquiv2017Codes = equiv2025to2017.get(course.code);
         const replacesEquiv2017Names = replacesEquiv2017Codes?.map(
           (c) => courseMap2017.get(c)?.name ?? c,
         );
@@ -328,8 +245,9 @@ export function useCurriculumEngine() {
         return {
           ...result,
           isRetiredForPeriod,
-          noEquivalenceAvailable,
-          isInjectedEquivalent,
+          noEquivalenceAvailable: false,
+          isInjectedEquivalent:
+            !!replacesEquiv2017Codes && course.plan === "2025",
           replacesEquiv2017Codes,
           replacesEquiv2017Names,
         };
@@ -337,14 +255,6 @@ export function useCurriculumEngine() {
     );
 
     // ── 6. Enrollment availability ────────────────────────────────────────────
-    //
-    // Decision order (mirrors the spec):
-    //   1. Already approved → not available
-    //   2. Missing prerequisites → not available
-    //   3. Retired Plan 2017 course (still in list as history) → not available
-    //   4. Check semester match (or reprogramación override)
-    //   5. All checks pass → availableForEnrollment = true
-
     const coursesWithEnrollment: CourseWithStatus[] = coursesWithStatus.map(
       (course) => {
         if (course.status === "approved") {
@@ -353,12 +263,11 @@ export function useCurriculumEngine() {
         if ((course.missingPrerequisites?.length ?? 0) > 0) {
           return { ...course, availableForEnrollment: false };
         }
-        // Retired Plan 2017 course kept only as approved history — not enrollable
+        // Retired Plan 2017 course kept only as history — not enrollable
         if (course.isRetiredForPeriod) {
           return { ...course, availableForEnrollment: false };
         }
 
-        // Check if it's in the target semester (or rescheduled to it)
         const reschedule = getRescheduledSemester(course.code, enrollYear);
         const isRescheduled =
           reschedule !== null && reschedule.offeredSemester === enrollSem;
@@ -390,7 +299,7 @@ export function useCurriculumEngine() {
     const progressPercentage =
       totalCredits > 0 ? (approvedCredits / totalCredits) * 100 : 0;
 
-    // ── 8. Full plan views (for "Ver sílabo completo") ────────────────────────
+    // ── 8. Full plan views ────────────────────────────────────────────────────
     const fullCourses2017: CourseWithStatus[] = courses2017.map((c) => {
       const isSimulated = simulatedSet.has(c.code);
       const result = computeCourseStatus(c, effectiveApproved, isSimulated);
@@ -542,7 +451,7 @@ export function useCurriculumEngine() {
       );
     };
 
-    // ── 14. Trayectoria ideal de créditos (referencia: 5 años, sin atrasos) ────
+    // ── 14. Trayectoria ideal de créditos ─────────────────────────────────────
     const idealCreditsPerSemesterArr =
       activePlan === "2017"
         ? idealCreditsPerSemester2017
@@ -560,8 +469,6 @@ export function useCurriculumEngine() {
       },
     );
 
-    // Semestre actual del estudiante en su propia trayectoria (1..10),
-    // según su año de ingreso y el periodo de matrícula seleccionado.
     const currentSemesterIndex = Math.max(
       1,
       Math.min(10, (studentCareerYear - 1) * 2 + enrollSem),
@@ -571,31 +478,20 @@ export function useCurriculumEngine() {
       .slice(0, currentSemesterIndex)
       .reduce((sum, c) => sum + c, 0);
 
-    // Positivo = adelantado respecto a la ruta ideal, negativo = atrasado.
     const creditsAheadBehind = approvedCredits - idealCreditsCumulativeToDate;
 
-    // Carga recomendada para el semestre que el estudiante está a punto de
-    // matricular (la que se muestra en el Simulador). Es solo una referencia:
-    // no es un mínimo ni un máximo oficial de matrícula.
     const recommendedCreditsThisSemester =
       idealCreditsPerSemesterArr[currentSemesterIndex - 1] ?? 0;
 
     return {
-      // Plan & student context
       activePlan,
       studentCareerYear,
       activePlan2017CareerYears,
       retiredPlan2017CareerYears,
-
-      // Courses
       courses: coursesWithEnrollment,
       fullCourses2017,
       fullCourses2025,
-
-      // Approvals
       effectiveApproved,
-
-      // Progress
       totalCredits,
       approvedCredits,
       totalCount,
@@ -604,19 +500,13 @@ export function useCurriculumEngine() {
       progressByYear,
       progressBySemester,
       estimatedSemestersRemaining,
-
-      // Trayectoria ideal (referencia de 5 años, sin atrasos)
       idealCreditsBySemester,
       idealCreditsCumulativeToDate,
       creditsAheadBehind,
       recommendedCreditsThisSemester,
-
-      // Navigation helpers
       unlockedBy,
       bottleneckCourses,
       downstreamCounts,
-
-      // Enrollment
       enrollmentTarget,
       enrollmentSummary,
     };

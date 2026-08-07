@@ -70,38 +70,23 @@ export function Simulador() {
     }
   };
 
-  // ── Course lists ────────────────────────────────────────────────────────────
-
-  // Sort ascending by (year, semester): años inferiores primero.
+  // Sort ascending by (year, semester)
   const byYearSemester = (a: CourseWithStatus, b: CourseWithStatus) =>
     a.year - b.year || a.semester - b.semester;
 
-  // All courses available for enrollment this semester
+  // All courses available for enrollment this semester (BOTH plans)
   const availableForSemester = engine.courses.filter(
     (c) => c.availableForEnrollment,
   );
 
-  // Regular courses: Plan 2017 courses still being offered, or Plan 2025 native courses
   const regularCourses = availableForSemester
-    .filter((c) => !c.isInjectedEquivalent)
-    .sort(byYearSemester);
-
-  // Plan 2025 equivalents injected for Plan 2017 students (replacements for retired courses)
-  const injectedEquivalents = availableForSemester
-    .filter((c) => c.isInjectedEquivalent)
+    .filter((c) => !c.isRescheduled)
     .sort(byYearSemester);
 
   // Rescheduled courses (for the notice banner)
   const rescheduledCourses = availableForSemester.filter(
     (c) => c.isRescheduled,
   );
-
-  // Retired 2017 courses with NO official 2025 equivalent — student is stuck
-  const noEquivCourses = (
-    engine.activePlan === "2017"
-      ? engine.courses.filter((c) => c.noEquivalenceAvailable === true)
-      : []
-  ).sort(byYearSemester);
 
   // Courses locked by missing prerequisites (correct semester, but blocked)
   const lockedThisSemester = engine.courses
@@ -116,9 +101,6 @@ export function Simulador() {
 
   // Courses whose prerequisites ARE met, but that are normally taught in the
   // OTHER semester (A/B) this period — candidates for a manual "reprogramación"
-  // enrollment (student has special authorization to take it out of its usual
-  // semester). Prerequisites are still enforced: only status === 'available'
-  // courses qualify, same gate as the regular enrollment list.
   const reprogramacionCandidates = engine.courses
     .filter(
       (c) =>
@@ -128,7 +110,7 @@ export function Simulador() {
     )
     .sort(byYearSemester);
 
-  // ── Credit bar ──────────────────────────────────────────────────────────────
+  // ── Credit bar ────────────────────────────────────────────────────────────
   const {
     totalCredits: simCredits,
     isUnderMinimum,
@@ -148,18 +130,16 @@ export function Simulador() {
       ? "bg-amber-500"
       : "bg-emerald-500";
 
-  // ── Context labels ──────────────────────────────────────────────────────────
+  // ── Context labels ────────────────────────────────────────────────────────
   const studentCareerYearLabel = `Año ${engine.studentCareerYear} de carrera`;
   const retired2017YearsLabel =
     engine.retiredPlan2017CareerYears.length > 0
       ? `Años ${engine.retiredPlan2017CareerYears.join(", ")} del Sílabo 2017 no se ofertan en ${target.year}`
       : null;
 
-  const totalNotRegular = injectedEquivalents.length + noEquivCourses.length;
-
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-8">
-      {/* ── Header ───────────────────────────────────────────────────────────── */}
+      {/* Header */}
       <header>
         <h1 className="text-3xl font-bold tracking-tight">
           Simulador de Matrícula
@@ -170,7 +150,7 @@ export function Simulador() {
         </p>
       </header>
 
-      {/* ── Period Selector ──────────────────────────────────────────────────── */}
+      {/* Period Selector */}
       <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <Calendar className="w-5 h-5 text-primary" />
@@ -227,9 +207,10 @@ export function Simulador() {
               <strong>
                 {target.year} — Sem. {target.semester === 1 ? "A" : "B"}
               </strong>
-              &nbsp;·&nbsp; Plan {engine.activePlan}
-              &nbsp;·&nbsp; {studentCareerYearLabel}
-              &nbsp;·&nbsp; {availableForSemester.length} cursos disponibles
+              &nbsp;&middot;&nbsp; Plan {engine.activePlan}
+              &nbsp;&middot;&nbsp; {studentCareerYearLabel}
+              &nbsp;&middot;&nbsp; {availableForSemester.length} cursos
+              disponibles
             </span>
           </div>
 
@@ -242,7 +223,7 @@ export function Simulador() {
         </div>
       </div>
 
-      {/* ── Main Grid ───────────────────────────────────────────────────────── */}
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Left: course selection */}
         <div className="lg:col-span-2 space-y-8">
@@ -264,7 +245,7 @@ export function Simulador() {
             </div>
           )}
 
-          {/* ── Section 1: Cursos disponibles (regulares) ─────────────────── */}
+          {/* Section 1: All available courses (2017 + 2025) */}
           <div>
             <h2 className="text-xl font-bold border-b border-border pb-2 mb-4 flex items-center gap-2">
               Disponibles — Semestre {target.semester === 1 ? "A" : "B"}
@@ -280,9 +261,8 @@ export function Simulador() {
                   No hay cursos propios disponibles para este semestre.
                 </p>
                 <p className="text-sm mt-1 opacity-70">
-                  {injectedEquivalents.length > 0
-                    ? "Revisa la sección de equivalentes del Sílabo 2025 a continuación."
-                    : "Es posible que ya los hayas aprobado todos, o que debas aprobar prerrequisitos primero."}
+                  Es posible que ya los hayas aprobado todos, o que debas
+                  aprobar prerrequisitos primero.
                 </p>
               </div>
             ) : (
@@ -294,190 +274,7 @@ export function Simulador() {
             )}
           </div>
 
-          {/* ── Section 2: Equivalentes del Sílabo 2025 (inyectados) ─────── */}
-          {engine.activePlan === "2017" &&
-            (injectedEquivalents.length > 0 || noEquivCourses.length > 0) && (
-              <div>
-                <h2 className="text-xl font-bold border-b border-border pb-2 mb-1 flex items-center gap-2 text-rose-600 dark:text-rose-400">
-                  <Ban className="w-5 h-5 shrink-0" />
-                  Cursos retirados del Sílabo 2017
-                  <span className="text-sm font-normal text-muted-foreground">
-                    ({totalNotRegular})
-                  </span>
-                </h2>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Estos cursos ya no se ofertan en {target.year} porque la
-                  promoción 2024 (última del Sílabo 2017) los superó.
-                  {injectedEquivalents.length > 0 &&
-                    " Los que tienen equivalencia oficial del Sílabo 2025 pueden matricularse normalmente."}
-                </p>
-
-                {/* Injected 2025 equivalents */}
-                {injectedEquivalents.length > 0 && (
-                  <div className="space-y-3 mb-6">
-                    <AnimatePresence initial={false}>
-                      {injectedEquivalents.map((course) => {
-                        const isSelected = profile.simulatedCourses.includes(
-                          course.code,
-                        );
-                        return (
-                          <motion.div
-                            key={`equiv-${course.code}`}
-                            layout
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -8 }}
-                          >
-                            {/* 2025 course card — enrollable */}
-                            <label
-                              className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
-                                isSelected
-                                  ? "bg-primary/10 border-primary ring-1 ring-primary shadow-sm"
-                                  : "bg-card border-rose-500/30 hover:border-rose-500/60 hover:bg-muted/50"
-                              }`}
-                            >
-                              {/* Checkbox */}
-                              <div
-                                className={`w-5 h-5 shrink-0 rounded border flex items-center justify-center transition-colors ${
-                                  isSelected
-                                    ? "bg-primary border-primary text-primary-foreground"
-                                    : "border-input bg-background"
-                                }`}
-                                onClick={() =>
-                                  toggleCourseSimulated(course.code)
-                                }
-                              >
-                                {isSelected && (
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                )}
-                              </div>
-
-                              <div
-                                className="flex-1 min-w-0"
-                                onClick={() =>
-                                  toggleCourseSimulated(course.code)
-                                }
-                              >
-                                {/* Top row: code + badges + credits */}
-                                <div className="flex justify-between items-start mb-0.5 gap-2">
-                                  <span className="font-mono text-xs text-muted-foreground font-semibold">
-                                    {course.code}
-                                  </span>
-                                  <div className="flex items-center gap-1.5 shrink-0">
-                                    {course.isRescheduled && (
-                                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                                        Reprogramado
-                                      </span>
-                                    )}
-                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30">
-                                      Equivalencia Sílabo 2017
-                                    </span>
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-background border border-border">
-                                      {course.credits} cr
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* Course name (2025) */}
-                                <h3 className="font-bold text-sm">
-                                  {course.name}
-                                </h3>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  Año {course.year} — Sem{" "}
-                                  {course.semester === 1 ? "A" : "B"} · Sílabo
-                                  2025
-                                </p>
-
-                                {/* Equivalence mapping */}
-                                {(course.replacesEquiv2017Names?.length ?? 0) >
-                                  0 && (
-                                  <div className="mt-2 pl-3 border-l-2 border-rose-500/30">
-                                    <div className="flex items-center gap-1 text-[10px] text-rose-500/70 dark:text-rose-400/70 font-semibold uppercase tracking-wide mb-1">
-                                      <ArrowDown className="w-3 h-3" />
-                                      Equivale a
-                                    </div>
-                                    {course.replacesEquiv2017Names!.map(
-                                      (name, i) => (
-                                        <div
-                                          key={i}
-                                          className="flex items-center gap-1.5"
-                                        >
-                                          <span className="font-mono text-[10px] text-muted-foreground">
-                                            {course.replacesEquiv2017Codes?.[i]}
-                                          </span>
-                                          <span className="text-xs font-medium text-foreground/80">
-                                            {name}
-                                          </span>
-                                          <span className="text-[10px] text-muted-foreground italic">
-                                            · Sílabo 2017
-                                          </span>
-                                        </div>
-                                      ),
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </label>
-                          </motion.div>
-                        );
-                      })}
-                    </AnimatePresence>
-                  </div>
-                )}
-
-                {/* No-equivalent courses */}
-                {noEquivCourses.length > 0 && (
-                  <div className="space-y-3">
-                    {noEquivCourses.map((course) => (
-                      <div
-                        key={`noequiv-${course.code}`}
-                        className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4"
-                      >
-                        {/* Header row */}
-                        <div className="flex justify-between items-start gap-2 mb-1">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <TriangleAlert className="w-4 h-4 text-amber-500 shrink-0" />
-                            <span className="font-mono text-xs text-muted-foreground font-semibold">
-                              {course.code}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                              Sin equivalencia
-                            </span>
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-background border border-border">
-                              {course.credits} cr
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Name and location */}
-                        <h3 className="font-bold text-sm mb-0.5">
-                          {course.name}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          Año {course.year} — Sem{" "}
-                          {course.semester === 1 ? "A" : "B"} · Sílabo 2017
-                        </p>
-
-                        {/* Warning message */}
-                        <div className="mt-3 bg-amber-500/8 border border-amber-500/20 rounded-lg px-3 py-2.5 text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-                          Este curso ya no se oferta y{" "}
-                          <strong>
-                            no posee una equivalencia oficial en el Sílabo 2025
-                          </strong>
-                          . Para aprobarlo sería necesaria una reprogramación
-                          extraordinaria o una disposición especial de la
-                          Escuela Profesional.
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-          {/* ── Section 3: Bloqueados este semestre ───────────────────────── */}
+          {/* Section 2: Locked this semester */}
           {lockedThisSemester.length > 0 && (
             <div>
               <h2 className="text-xl font-bold border-b border-border pb-2 mb-4 text-muted-foreground flex items-center gap-2">
@@ -511,7 +308,7 @@ export function Simulador() {
             </div>
           )}
 
-          {/* ── Section 4: Matrícula por reprogramación (manual) ──────────── */}
+          {/* Section 3: Matrícula por reprogramación (manual) */}
           {reprogramacionCandidates.length > 0 && (
             <div>
               <h2 className="text-xl font-bold border-b border-border pb-2 mb-1 flex items-center gap-2 text-amber-600 dark:text-amber-400">
@@ -546,8 +343,9 @@ export function Simulador() {
                         className={`w-5 h-5 shrink-0 rounded border flex items-center justify-center transition-colors ${
                           isSelected
                             ? "bg-primary border-primary text-primary-foreground"
-                            : "border-border"
+                            : "border-border bg-background"
                         }`}
+                        onClick={() => toggleCourseSimulated(course.code)}
                       >
                         {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
                       </div>
@@ -593,7 +391,13 @@ export function Simulador() {
                   Créditos
                 </span>
                 <span
-                  className={`font-bold text-2xl ${isOverMaximum ? "text-destructive" : isUnderMinimum ? "text-amber-500" : "text-primary"}`}
+                  className={`font-bold text-2xl ${
+                    isOverMaximum
+                      ? "text-destructive"
+                      : isUnderMinimum
+                        ? "text-amber-500"
+                        : "text-primary"
+                  }`}
                 >
                   {simCredits}
                   <span className="text-base font-normal text-muted-foreground">
@@ -634,7 +438,7 @@ export function Simulador() {
               </span>
             </div>
 
-            {/* Recommended load vs selected (reference only, not an official limit) */}
+            {/* Recommended load vs selected */}
             {recommendedCreditsThisSemester > 0 && (
               <div className="text-sm py-2 border-t border-border space-y-1">
                 <div className="flex justify-between items-center text-muted-foreground">
@@ -721,10 +525,10 @@ export function Simulador() {
                   {willUnlock.slice(0, 6).map((c) => (
                     <div
                       key={c.code}
-                      className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400"
+                      className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs"
                     >
                       <ArrowRight className="w-3.5 h-3.5 shrink-0" />
-                      <span className="text-xs truncate">{c.name}</span>
+                      <span className="truncate">{c.name}</span>
                     </div>
                   ))}
                   {willUnlock.length > 6 && (
@@ -756,7 +560,7 @@ export function Simulador() {
                         {isEquiv &&
                           (c.replacesEquiv2017Names?.length ?? 0) > 0 && (
                             <span className="text-[10px] text-rose-500 dark:text-rose-400 truncate">
-                              ↳ Equiv. de: {c.replacesEquiv2017Names![0]}
+                              Equiv. de: {c.replacesEquiv2017Names![0]}
                             </span>
                           )}
                       </div>
@@ -802,9 +606,16 @@ function CourseCardList({
       <AnimatePresence initial={false}>
         {courses.map((course) => {
           const isSelected = selectedCodes.includes(course.code);
+          const plan = course.plan; // "2017" | "2025"
+          const is2025Equiv =
+            plan === "2025" &&
+            course.replacesEquiv2017Names &&
+            course.replacesEquiv2017Names.length > 0;
+          const has2025Equiv = plan === "2017" && course.replacedBy;
+
           return (
             <motion.label
-              key={`reg-${course.code}`}
+              key={`${plan}-${course.code}`}
               layout
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -831,22 +642,47 @@ function CourseCardList({
                 className="flex-1 min-w-0"
                 onClick={() => onToggle(course.code)}
               >
+                {/* Top row: code + badges + credits */}
                 <div className="flex justify-between items-start mb-0.5 gap-2">
-                  <span className="font-mono text-xs text-muted-foreground font-semibold">
-                    {course.code}
-                  </span>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-xs text-muted-foreground font-semibold">
+                      {course.code}
+                    </span>
+                    {/* Plan badge */}
+                    <span
+                      className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
+                        plan === "2025"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                          : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                      }`}
+                    >
+                      Sílabo {plan}
+                    </span>
                     {course.isRescheduled && (
                       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                         Reprogramado
                       </span>
                     )}
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-background border border-border">
-                      {course.credits} cr
-                    </span>
+                    {is2025Equiv && (
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                        Equiv. Sílabo 2017
+                      </span>
+                    )}
+                    {has2025Equiv && (
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
+                        Tiene equiv. 2025
+                      </span>
+                    )}
                   </div>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-background border border-border shrink-0">
+                    {course.credits} cr
+                  </span>
                 </div>
+
+                {/* Course name */}
                 <h3 className="font-bold text-sm">{course.name}</h3>
+
+                {/* Meta row */}
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                   <span className="text-xs text-muted-foreground">
                     Año {course.year} — Sem {course.semester === 1 ? "A" : "B"}
@@ -857,6 +693,42 @@ function CourseCardList({
                     </span>
                   )}
                 </div>
+
+                {/* Equivalence info */}
+                {is2025Equiv && course.replacesEquiv2017Names && (
+                  <div className="mt-2 pl-3 border-l-2 border-rose-500/30">
+                    <div className="flex items-center gap-1 text-[10px] text-rose-500/70 dark:text-rose-400/70 font-semibold uppercase tracking-wide mb-1">
+                      <ArrowDown className="w-3 h-3" />
+                      Equivalencia Sílabo 2017
+                    </div>
+                    {course.replacesEquiv2017Names.map((name, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                      >
+                        <span className="font-mono text-[10px]">
+                          {course.replacesEquiv2017Codes?.[i]}
+                        </span>
+                        <span>{name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {has2025Equiv && course.replacementCourse && (
+                  <div className="mt-2 pl-3 border-l-2 border-violet-500/30">
+                    <div className="flex items-center gap-1 text-[10px] text-violet-500/70 dark:text-violet-400/70 font-semibold uppercase tracking-wide mb-1">
+                      <ArrowDown className="w-3 h-3" />
+                      Equivalente en Sílabo 2025
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="font-mono text-[10px]">
+                        {course.replacedBy}
+                      </span>
+                      <span>{course.replacementCourse.name}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.label>
           );
