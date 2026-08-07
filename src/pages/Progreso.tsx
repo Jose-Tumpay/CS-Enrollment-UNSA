@@ -109,13 +109,18 @@ export function Progreso() {
     resetProfile();
   };
 
-  // ── Timeline ───────────────────────────────────────────────────────────────
+  // ── Timeline (only courses from student's active plan) ────────────────────
+  const planCoursesForTimeline =
+    engine.activePlan === "2017"
+      ? engine.fullCourses2017
+      : engine.fullCourses2025;
+
   const approvedBySemester = engine.progressBySemester
     .filter((sem) => sem.approved > 0)
     .map((sem) => {
       const year = Math.ceil(sem.semester / 2);
       const semesterPart: 1 | 2 = sem.semester % 2 === 0 ? 2 : 1;
-      const courses = engine.courses.filter(
+      const courses = planCoursesForTimeline.filter(
         (c) =>
           c.year === year &&
           c.semester === semesterPart &&

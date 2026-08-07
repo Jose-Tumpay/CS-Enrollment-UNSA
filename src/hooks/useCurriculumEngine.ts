@@ -177,13 +177,12 @@ export function useCurriculumEngine() {
     );
 
     // ── 3. Cross-plan effective approvals ─────────────────────────────────────
-    // BUG FIX: ONLY approvedCourses count for prerequisites/progress.
-    // simulatedCourses are for enrollment planning ONLY and must NOT unlock anything.
-    const directApproved = new Set(profile.approvedCourses);
+    // strictlyApproved: only courses the student ACTUALLY passed (for progress)
+    const strictlyApproved = new Set(profile.approvedCourses);
 
-    const effectiveApproved = new Set<string>(directApproved);
-
-    for (const code of directApproved) {
+    // effectiveApproved: includes cross-plan equivalents (for prerequisite checking)
+    const effectiveApproved = new Set<string>(strictlyApproved);
+    for (const code of strictlyApproved) {
       const c25 = equiv2017to2025.get(code);
       if (c25) effectiveApproved.add(c25);
       const c17arr = equiv2025to2017.get(code);
@@ -279,15 +278,21 @@ export function useCurriculumEngine() {
       },
     );
 
-    // ── 7. Progress statistics ────────────────────────────────────────────────
+    // ── 7. Progress statistics (ONLY for student's active plan) ──────────────
+    // Progress must reflect the student's actual plan, not both plans combined.
+    const progressCourses =
+      activePlan === "2017"
+        ? coursesWithEnrollment.filter((c) => c.plan === "2017")
+        : coursesWithEnrollment.filter((c) => c.plan === "2025");
+
     let totalCredits = 0;
     let approvedCredits = 0;
     let approvedCount = 0;
-    const totalCount = coursesWithEnrollment.length;
+    const totalCount = progressCourses.length;
 
-    for (const c of coursesWithEnrollment) {
+    for (const c of progressCourses) {
       totalCredits += c.credits;
-      if (profile.approvedCourses.includes(c.code)) {
+      if (strictlyApproved.has(c.code)) {
         approvedCredits += c.credits;
         approvedCount++;
       }
@@ -311,7 +316,7 @@ export function useCurriculumEngine() {
       return computeCourseStatus(c, effectiveApproved, isSimulated);
     });
 
-    // ── 9. Bottleneck detection ───────────────────────────────────────────────
+    // ── 9. Bottleneck detection (only for student's active plan) ───────────────
     const getDescendants = (
       code: string,
       visited = new Set<string>(),
@@ -319,15 +324,15 @@ export function useCurriculumEngine() {
       if (visited.has(code)) return visited;
       visited.add(code);
       const equivalents = expandCodeEquivalents(code);
-      for (const c of coursesWithEnrollment) {
+      for (const c of progressCourses) {
         if (c.prerequisites.some((p) => equivalents.includes(p)))
           getDescendants(c.code, visited);
       }
       return visited;
     };
 
-    const nonApproved = coursesWithEnrollment.filter(
-      (c) => !effectiveApproved.has(c.code),
+    const nonApproved = progressCourses.filter(
+      (c) => !strictlyApproved.has(c.code),
     );
     let maxDownstream = 0;
     const downstreamCounts: Record<string, number> = {};
@@ -342,10 +347,10 @@ export function useCurriculumEngine() {
       (c) => downstreamCounts[c.code] === maxDownstream && maxDownstream > 0,
     );
 
-    // ── 10. Progress by year / semester ───────────────────────────────────────
+    // ── 10. Progress by year / semester (only for active plan) ────────────────
     const progressByYear = [1, 2, 3, 4, 5].map((yr) => {
-      const yrCourses = coursesWithEnrollment.filter((c) => c.year === yr);
-      const approved = yrCourses.filter((c) => effectiveApproved.has(c.code));
+      const yrCourses = progressCourses.filter((c) => c.year === yr);
+      const approved = yrCourses.filter((c) => strictlyApproved.has(c.code));
       return {
         year: yr,
         total: yrCourses.length,
@@ -358,10 +363,10 @@ export function useCurriculumEngine() {
     const progressBySemester = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((sem) => {
       const yr = Math.ceil(sem / 2);
       const s: 1 | 2 = sem % 2 === 0 ? 2 : 1;
-      const semCourses = coursesWithEnrollment.filter(
+      const semCourses = progressCourses.filter(
         (c) => c.year === yr && c.semester === s,
       );
-      const approved = semCourses.filter((c) => effectiveApproved.has(c.code));
+      const approved = semCourses.filter((c) => strictlyApproved.has(c.code));
       return {
         semester: sem,
         name: `${yr}-${s === 1 ? "A" : "B"}`,
@@ -374,18 +379,18 @@ export function useCurriculumEngine() {
       };
     });
 
-    // ── 11. Estimated semesters remaining ──────────────────────────────────────
+    // ── 11. Estimated semesters remaining (only for active plan) ─────────────
     const getLongestPath = (code: string): number => {
-      const children = coursesWithEnrollment.filter(
-        (c) => c.prerequisites.includes(code) && !effectiveApproved.has(c.code),
+      const children = progressCourses.filter(
+        (c) => c.prerequisites.includes(code) && !strictlyApproved.has(c.code),
       );
       if (children.length === 0) return 1;
       return 1 + Math.max(...children.map((c) => getLongestPath(c.code)));
     };
 
-    const availableNow = coursesWithEnrollment.filter(
+    const availableNow = progressCourses.filter(
       (c) =>
-        !effectiveApproved.has(c.code) &&
+        !strictlyApproved.has(c.code) &&
         (c.missingPrerequisites?.length ?? 0) === 0,
     );
     let longestPath = 0;
@@ -455,7 +460,7 @@ export function useCurriculumEngine() {
     // ── 13. Helper: what does approving `code` unlock? ────────────────────────
     const unlockedBy = (courseCode: string): CourseWithStatus[] => {
       const equivalents = expandCodeEquivalents(courseCode);
-      return coursesWithEnrollment.filter((c) =>
+      return progressCourses.filter((c) =>
         c.prerequisites.some((p) => equivalents.includes(p)),
       );
     };
