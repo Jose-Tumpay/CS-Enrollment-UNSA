@@ -38,27 +38,25 @@ export function Progreso() {
   };
 
   // ── Bulk helpers ───────────────────────────────────────────────────────────
+  // Use the full plan courses (2017 or 2025) based on student's active plan.
+  // This ensures we only ever approve courses from the student's own plan.
+  const planCourses =
+    engine.activePlan === "2017"
+      ? engine.fullCourses2017
+      : engine.fullCourses2025;
+
   const coursesByYear = (year: number) =>
-    engine.courses
-      .filter((c) => c.year === year && c.plan === engine.activePlan)
-      .map((c) => c.code);
+    planCourses.filter((c) => c.year === year).map((c) => c.code);
 
   const coursesBySemester = (year: number, semester: 1 | 2) =>
-    engine.courses
-      .filter(
-        (c) =>
-          c.year === year &&
-          c.semester === semester &&
-          c.plan === engine.activePlan,
-      )
+    planCourses
+      .filter((c) => c.year === year && c.semester === semester)
       .map((c) => c.code);
 
-  const availableNow = engine.courses
+  const availableNow = planCourses
     .filter(
       (c) =>
-        (c.missingPrerequisites?.length ?? 0) === 0 &&
-        c.status !== "approved" &&
-        c.plan === engine.activePlan,
+        (c.missingPrerequisites?.length ?? 0) === 0 && c.status !== "approved",
     )
     .map((c) => c.code);
 
@@ -227,7 +225,7 @@ export function Progreso() {
               <div className="px-5 pb-4 space-y-2">
                 {[1, 2, 3, 4, 5].map((year) => {
                   const total = coursesByYear(year).length;
-                  const approved = engine.courses.filter(
+                  const approved = planCourses.filter(
                     (c) => c.year === year && c.status === "approved",
                   ).length;
                   return (
@@ -285,7 +283,7 @@ export function Progreso() {
                 {[1, 2, 3, 4, 5].flatMap((year) =>
                   ([1, 2] as const).map((sem) => {
                     const codes = coursesBySemester(year, sem);
-                    const approved = engine.courses.filter(
+                    const approved = planCourses.filter(
                       (c) =>
                         c.year === year &&
                         c.semester === sem &&
