@@ -33,6 +33,25 @@ const courseMap2017 = new Map(courses2017.map((c) => [c.code, c]));
 const courseMap2025 = new Map(courses2025.map((c) => [c.code, c]));
 
 /**
+ * Créditos "ideales" por semestre (1..10): la carga de un estudiante que
+ * aprueba todo sin atrasos y egresa en 5 años, según el plan oficial.
+ * Se calcula sumando los créditos reales de courses2017/courses2025 —
+ * nunca se hardcodea, así queda siempre sincronizado con los datos.
+ * Índice 0 = Año1-A, índice 1 = Año1-B, ..., índice 9 = Año5-B.
+ */
+function computeIdealCreditsBySemester(courses: Course[]): number[] {
+  const sums = new Array(10).fill(0);
+  for (const c of courses) {
+    const idx = (c.year - 1) * 2 + (c.semester - 1);
+    if (idx >= 0 && idx < 10) sums[idx] += c.credits;
+  }
+  return sums;
+}
+
+const idealCreditsPerSemester2017 = computeIdealCreditsBySemester(courses2017);
+const idealCreditsPerSemester2025 = computeIdealCreditsBySemester(courses2025);
+
+/**
  * Expands a course code to the full set of codes that represent "the same
  * requirement" across both plans: itself, plus its direct 2017↔2025
  * equivalent(s) if any exist.
@@ -273,24 +292,7 @@ export function useCurriculumEngine() {
         .map((code) => courseMap2025.get(code))
         .filter((c): c is Course => !!c);
 
-      const active2025Courses: Course[] = courses2025.filter(
-        (c) => !is2025CourseNotYetActive(c, enrollYear),
-      );
-
-      const mergedCourses: Course[] = [];
-      const seenCodes = new Set<string>();
-
-      for (const course of [
-        ...kept2017,
-        ...injected2025,
-        ...active2025Courses,
-      ]) {
-        if (seenCodes.has(course.code)) continue;
-        seenCodes.add(course.code);
-        mergedCourses.push(course);
-      }
-
-      resolvedCourses = mergedCourses;
+      resolvedCourses = [...kept2017, ...injected2025];
     } else {
       resolvedCourses = [...courses2025];
     }
@@ -540,6 +542,44 @@ export function useCurriculumEngine() {
       );
     };
 
+    // ── 14. Trayectoria ideal de créditos (referencia: 5 años, sin atrasos) ────
+    const idealCreditsPerSemesterArr =
+      activePlan === "2017"
+        ? idealCreditsPerSemester2017
+        : idealCreditsPerSemester2025;
+
+    const idealCreditsBySemester = idealCreditsPerSemesterArr.map(
+      (credits, i) => {
+        const yr = Math.floor(i / 2) + 1;
+        const s: 1 | 2 = i % 2 === 0 ? 1 : 2;
+        return {
+          semester: i + 1,
+          name: `${yr}-${s === 1 ? "A" : "B"}`,
+          credits,
+        };
+      },
+    );
+
+    // Semestre actual del estudiante en su propia trayectoria (1..10),
+    // según su año de ingreso y el periodo de matrícula seleccionado.
+    const currentSemesterIndex = Math.max(
+      1,
+      Math.min(10, (studentCareerYear - 1) * 2 + enrollSem),
+    );
+
+    const idealCreditsCumulativeToDate = idealCreditsPerSemesterArr
+      .slice(0, currentSemesterIndex)
+      .reduce((sum, c) => sum + c, 0);
+
+    // Positivo = adelantado respecto a la ruta ideal, negativo = atrasado.
+    const creditsAheadBehind = approvedCredits - idealCreditsCumulativeToDate;
+
+    // Carga recomendada para el semestre que el estudiante está a punto de
+    // matricular (la que se muestra en el Simulador). Es solo una referencia:
+    // no es un mínimo ni un máximo oficial de matrícula.
+    const recommendedCreditsThisSemester =
+      idealCreditsPerSemesterArr[currentSemesterIndex - 1] ?? 0;
+
     return {
       // Plan & student context
       activePlan,
@@ -564,6 +604,12 @@ export function useCurriculumEngine() {
       progressByYear,
       progressBySemester,
       estimatedSemestersRemaining,
+
+      // Trayectoria ideal (referencia de 5 años, sin atrasos)
+      idealCreditsBySemester,
+      idealCreditsCumulativeToDate,
+      creditsAheadBehind,
+      recommendedCreditsThisSemester,
 
       // Navigation helpers
       unlockedBy,

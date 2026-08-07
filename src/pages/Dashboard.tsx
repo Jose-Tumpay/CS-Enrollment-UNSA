@@ -1,12 +1,28 @@
-import { useCurriculumEngine } from '../hooks/useCurriculumEngine';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { CourseCard } from '../components/CourseCard';
-import { motion } from 'framer-motion';
+import { useCurriculumEngine } from "../hooks/useCurriculumEngine";
 import {
-  CheckCircle, BookOpen, Clock, Trophy, Target,
-  BarChart2, Calendar, TrendingUp, AlertCircle,
-} from 'lucide-react';
-import { useLocation } from 'wouter';
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import { CourseCard } from "../components/CourseCard";
+import { motion } from "framer-motion";
+import {
+  CheckCircle,
+  BookOpen,
+  Clock,
+  Trophy,
+  Target,
+  BarChart2,
+  Calendar,
+  TrendingUp,
+  AlertCircle,
+  Scale,
+} from "lucide-react";
+import { useLocation } from "wouter";
 
 export function Dashboard() {
   const engine = useCurriculumEngine();
@@ -15,20 +31,27 @@ export function Dashboard() {
   if (!engine) return null;
 
   const circumference = 2 * Math.PI * 45; // r=45
-  const strokeDashoffset = circumference - (engine.progressPercentage / 100) * circumference;
+  const strokeDashoffset =
+    circumference - (engine.progressPercentage / 100) * circumference;
 
   // Courses available in the planned semester
-  const availableForSemester = engine.courses.filter(c => c.availableForEnrollment);
+  const availableForSemester = engine.courses.filter(
+    (c) => c.availableForEnrollment,
+  );
   // Generic available (any semester, prerequisites met)
-  const availableAnySemester = engine.courses.filter(c => c.status === 'available').slice(0, 4);
+  const availableAnySemester = engine.courses
+    .filter((c) => c.status === "available")
+    .slice(0, 4);
 
   const { enrollmentTarget } = engine;
-  const semLabel = enrollmentTarget.semester === 1 ? 'A' : 'B';
+  const semLabel = enrollmentTarget.semester === 1 ? "A" : "B";
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          Dashboard
+        </h1>
         <p className="text-muted-foreground">
           Tu progreso académico · Plan {engine.activePlan}
         </p>
@@ -52,11 +75,49 @@ export function Dashboard() {
           </div>
         </div>
         <button
-          onClick={() => setLocation('/simulador')}
+          onClick={() => setLocation("/simulador")}
           className="text-sm font-semibold text-primary hover:underline shrink-0"
         >
           Abrir Simulador →
         </button>
+      </motion.div>
+
+      {/* ── Ideal trajectory comparison ────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border rounded-xl px-5 py-3.5 ${
+          engine.creditsAheadBehind >= 0
+            ? "bg-emerald-500/5 border-emerald-500/20"
+            : "bg-amber-500/5 border-amber-500/20"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <Scale
+            className={`w-5 h-5 shrink-0 ${engine.creditsAheadBehind >= 0 ? "text-emerald-500" : "text-amber-500"}`}
+          />
+          <div>
+            <span className="font-semibold text-sm">
+              Según tu promoción y semestre actual deberías haber acumulado ~
+              {engine.idealCreditsCumulativeToDate} créditos.
+            </span>
+            <span className="text-muted-foreground text-sm ml-2">
+              Créditos aprobados actualmente: {engine.approvedCredits}.
+            </span>
+          </div>
+        </div>
+        <span
+          className={`text-sm font-bold px-3 py-1.5 rounded-full shrink-0 ${
+            engine.creditsAheadBehind >= 0
+              ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+              : "text-amber-600 dark:text-amber-400 bg-amber-500/10"
+          }`}
+        >
+          {engine.creditsAheadBehind >= 0
+            ? `+${engine.creditsAheadBehind} adelantado`
+            : `${engine.creditsAheadBehind} atrasado`}
+        </span>
       </motion.div>
 
       {/* ── Hero Stats ──────────────────────────────────────────────────────── */}
@@ -73,12 +134,20 @@ export function Dashboard() {
           </h3>
           <div className="relative w-40 h-40 flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90">
-              <circle cx="50%" cy="50%" r="45" className="stroke-muted fill-none" strokeWidth="8" />
+              <circle
+                cx="50%"
+                cy="50%"
+                r="45"
+                className="stroke-muted fill-none"
+                strokeWidth="8"
+              />
               <motion.circle
                 initial={{ strokeDashoffset: circumference }}
                 animate={{ strokeDashoffset }}
-                transition={{ duration: 1.5, ease: 'easeOut' }}
-                cx="50%" cy="50%" r="45"
+                transition={{ duration: 1.5, ease: "easeOut" }}
+                cx="50%"
+                cy="50%"
+                r="45"
                 className="stroke-primary fill-none"
                 strokeWidth="8"
                 strokeDasharray={circumference}
@@ -91,11 +160,12 @@ export function Dashboard() {
               </span>
             </div>
           </div>
-          {engine.progressPercentage >= 50 && engine.progressPercentage < 100 && (
-            <div className="mt-6 flex items-center gap-2 text-sm font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full">
-              <Trophy className="w-4 h-4" /> ¡Has superado la mitad!
-            </div>
-          )}
+          {engine.progressPercentage >= 50 &&
+            engine.progressPercentage < 100 && (
+              <div className="mt-6 flex items-center gap-2 text-sm font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full">
+                <Trophy className="w-4 h-4" /> ¡Has superado la mitad!
+              </div>
+            )}
           {engine.progressPercentage === 100 && (
             <div className="mt-6 flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full">
               <Trophy className="w-4 h-4" /> ¡Carrera Completada!
@@ -106,7 +176,9 @@ export function Dashboard() {
         {/* Stat cards */}
         <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
             className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between"
           >
             <div className="flex items-center gap-3 text-muted-foreground mb-4">
@@ -115,13 +187,19 @@ export function Dashboard() {
             </div>
             <div>
               <div className="flex items-end gap-2 mb-2">
-                <span className="text-3xl font-bold">{engine.approvedCredits}</span>
-                <span className="text-muted-foreground mb-1">/ {engine.totalCredits}</span>
+                <span className="text-3xl font-bold">
+                  {engine.approvedCredits}
+                </span>
+                <span className="text-muted-foreground mb-1">
+                  / {engine.totalCredits}
+                </span>
               </div>
               <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${(engine.approvedCredits / engine.totalCredits) * 100}%` }}
+                  animate={{
+                    width: `${(engine.approvedCredits / engine.totalCredits) * 100}%`,
+                  }}
                   className="h-full bg-primary"
                 />
               </div>
@@ -129,7 +207,9 @@ export function Dashboard() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
             className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between"
           >
             <div className="flex items-center gap-3 text-muted-foreground mb-4">
@@ -138,13 +218,19 @@ export function Dashboard() {
             </div>
             <div>
               <div className="flex items-end gap-2 mb-2">
-                <span className="text-3xl font-bold">{engine.approvedCount}</span>
-                <span className="text-muted-foreground mb-1">/ {engine.totalCount}</span>
+                <span className="text-3xl font-bold">
+                  {engine.approvedCount}
+                </span>
+                <span className="text-muted-foreground mb-1">
+                  / {engine.totalCount}
+                </span>
               </div>
               <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${(engine.approvedCount / engine.totalCount) * 100}%` }}
+                  animate={{
+                    width: `${(engine.approvedCount / engine.totalCount) * 100}%`,
+                  }}
                   className="h-full bg-emerald-500"
                 />
               </div>
@@ -152,7 +238,9 @@ export function Dashboard() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
             className="bg-card border border-border rounded-xl p-5 sm:col-span-2 bg-gradient-to-r from-card to-primary/5"
           >
             <div className="flex items-center gap-3 text-muted-foreground mb-2">
@@ -161,13 +249,16 @@ export function Dashboard() {
             </div>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <span className="text-3xl font-bold">{engine.estimatedSemestersRemaining}</span>
+                <span className="text-3xl font-bold">
+                  {engine.estimatedSemestersRemaining}
+                </span>
                 <span className="text-muted-foreground ml-2">
-                  semestres (~{Math.ceil(engine.estimatedSemestersRemaining / 2)} años)
+                  semestres (~
+                  {Math.ceil(engine.estimatedSemestersRemaining / 2)} años)
                 </span>
               </div>
               <button
-                onClick={() => setLocation('/simulador')}
+                onClick={() => setLocation("/simulador")}
                 className="bg-background border border-border hover:border-primary text-sm font-medium px-4 py-2 rounded-lg transition-colors shrink-0"
               >
                 Simular Matrícula
@@ -187,29 +278,47 @@ export function Dashboard() {
           </h3>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={engine.progressByYear} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <BarChart
+                data={engine.progressByYear}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="hsl(var(--border))"
+                />
                 <XAxis
                   dataKey="year"
-                  tickFormatter={v => `Año ${v}`}
-                  axisLine={false} tickLine={false}
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                  tickFormatter={(v) => `Año ${v}`}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
                 />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                />
                 <Tooltip
-                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
+                  cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
                   contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
                   }}
                   formatter={(value: number, name: string) => {
-                    if (name === 'percentage') return [`${Math.round(value)}%`, 'Completado'];
-                    return [value, 'Cursos Aprobados'];
+                    if (name === "percentage")
+                      return [`${Math.round(value)}%`, "Completado"];
+                    return [value, "Cursos Aprobados"];
                   }}
-                  labelFormatter={v => `Año ${v}`}
+                  labelFormatter={(v) => `Año ${v}`}
                 />
-                <Bar dataKey="percentage" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" maxBarSize={40} />
+                <Bar
+                  dataKey="percentage"
+                  radius={[4, 4, 0, 0]}
+                  fill="hsl(var(--primary))"
+                  maxBarSize={40}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -223,7 +332,7 @@ export function Dashboard() {
               Disponibles Sem. {semLabel} {enrollmentTarget.year}
             </h3>
             <button
-              onClick={() => setLocation('/malla')}
+              onClick={() => setLocation("/malla")}
               className="text-sm text-primary hover:underline font-medium"
             >
               Ver Malla →
@@ -233,18 +342,18 @@ export function Dashboard() {
           {availableForSemester.length > 0 ? (
             <>
               <div className="flex-1 overflow-y-auto pr-1 space-y-2">
-                {availableForSemester.slice(0, 5).map(course => (
+                {availableForSemester.slice(0, 5).map((course) => (
                   <CourseCard
                     key={course.code}
                     course={course}
-                    onClick={() => setLocation('/simulador')}
+                    onClick={() => setLocation("/simulador")}
                     layout="list"
                   />
                 ))}
               </div>
               {availableForSemester.length > 5 && (
                 <button
-                  onClick={() => setLocation('/simulador')}
+                  onClick={() => setLocation("/simulador")}
                   className="mt-3 w-full py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border border-dashed border-border rounded-xl"
                 >
                   + {availableForSemester.length - 5} más en el simulador
@@ -258,11 +367,11 @@ export function Dashboard() {
                 No hay cursos para Sem. {semLabel}. Mostrando otros disponibles:
               </div>
               <div className="flex-1 overflow-y-auto pr-1 space-y-2">
-                {availableAnySemester.map(course => (
+                {availableAnySemester.map((course) => (
                   <CourseCard
                     key={course.code}
                     course={course}
-                    onClick={() => setLocation('/simulador')}
+                    onClick={() => setLocation("/simulador")}
                     layout="list"
                   />
                 ))}
@@ -271,7 +380,11 @@ export function Dashboard() {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-6 text-center border-2 border-dashed border-border rounded-xl">
               <CheckCircle className="w-8 h-8 mb-2 opacity-50" />
-              <p>No hay cursos disponibles.<br />¡Revisa prerrequisitos o ya estás al día!</p>
+              <p>
+                No hay cursos disponibles.
+                <br />
+                ¡Revisa prerrequisitos o ya estás al día!
+              </p>
             </div>
           )}
         </div>
@@ -288,13 +401,20 @@ export function Dashboard() {
             <TrendingUp className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
             <div>
               <h4 className="font-bold text-amber-700 dark:text-amber-400 mb-1">
-                Curso{engine.bottleneckCourses.length > 1 ? 's' : ''} crítico{engine.bottleneckCourses.length > 1 ? 's' : ''} detectado{engine.bottleneckCourses.length > 1 ? 's' : ''}
+                Curso{engine.bottleneckCourses.length > 1 ? "s" : ""} crítico
+                {engine.bottleneckCourses.length > 1 ? "s" : ""} detectado
+                {engine.bottleneckCourses.length > 1 ? "s" : ""}
               </h4>
               <p className="text-sm text-muted-foreground mb-2">
-                Aprobar {engine.bottleneckCourses.length > 1 ? 'estos cursos' : 'este curso'} desbloqueará el mayor número de materias. Dales prioridad en tu matrícula.
+                Aprobar{" "}
+                {engine.bottleneckCourses.length > 1
+                  ? "estos cursos"
+                  : "este curso"}{" "}
+                desbloqueará el mayor número de materias. Dales prioridad en tu
+                matrícula.
               </p>
               <div className="flex flex-wrap gap-2">
-                {engine.bottleneckCourses.map(c => (
+                {engine.bottleneckCourses.map((c) => (
                   <span
                     key={c.code}
                     className="text-xs font-semibold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-full"
