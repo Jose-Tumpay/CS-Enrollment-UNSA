@@ -39,17 +39,26 @@ export function Progreso() {
 
   // ── Bulk helpers ───────────────────────────────────────────────────────────
   const coursesByYear = (year: number) =>
-    engine.courses.filter((c) => c.year === year).map((c) => c.code);
+    engine.courses
+      .filter((c) => c.year === year && c.plan === engine.activePlan)
+      .map((c) => c.code);
 
   const coursesBySemester = (year: number, semester: 1 | 2) =>
     engine.courses
-      .filter((c) => c.year === year && c.semester === semester)
+      .filter(
+        (c) =>
+          c.year === year &&
+          c.semester === semester &&
+          c.plan === engine.activePlan,
+      )
       .map((c) => c.code);
 
   const availableNow = engine.courses
     .filter(
       (c) =>
-        (c.missingPrerequisites?.length ?? 0) === 0 && c.status !== "approved",
+        (c.missingPrerequisites?.length ?? 0) === 0 &&
+        c.status !== "approved" &&
+        c.plan === engine.activePlan,
     )
     .map((c) => c.code);
 
