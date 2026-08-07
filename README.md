@@ -10,7 +10,7 @@ Escuela Profesional de Ciencia de la Computación — Universidad Nacional de Sa
 Una aplicación web que ayuda a los estudiantes a planificar su matrícula considerando el cambio de currícula entre el **Sílabo 2017** y el **Sílabo 2025**, las equivalencias entre ambos planes, el retiro progresivo de cursos y las reprogramaciones oficiales.
 
 <!-- 🔗 Reemplaza esto con tu link real cuando lo despliegues (Vercel/Netlify/GitHub Pages) -->
-**[▶ Ver demo en vivo](#)** · [Reportar un bug](../../issues/new?labels=bug) · [Pedir una función](../../issues/new?labels=enhancement)
+**[▶ Ver demo en vivo](https://cs-enrollment-unsa-kaml.vercel.app/progreso)** · [Reportar un bug](../../issues/new?labels=bug) · [Pedir una función](../../issues/new?labels=enhancement)
 
 <!-- 🖼 Muy recomendado: agrega aquí un screenshot o GIF corto de la app.
      ![Vista de la malla](docs/screenshot-malla.png) -->
