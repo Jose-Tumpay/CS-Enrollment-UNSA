@@ -177,10 +177,9 @@ export function useCurriculumEngine() {
     );
 
     // ── 3. Cross-plan effective approvals ─────────────────────────────────────
-    const directApproved = new Set([
-      ...profile.approvedCourses,
-      ...profile.simulatedCourses,
-    ]);
+    // BUG FIX: ONLY approvedCourses count for prerequisites/progress.
+    // simulatedCourses are for enrollment planning ONLY and must NOT unlock anything.
+    const directApproved = new Set(profile.approvedCourses);
 
     const effectiveApproved = new Set<string>(directApproved);
 
@@ -194,9 +193,6 @@ export function useCurriculumEngine() {
     const simulatedSet = new Set(profile.simulatedCourses);
 
     // ── 4. Resolve BOTH plans' active courses ─────────────────────────────────
-    // Show all active 2017 courses (including retired-but-approved as history)
-    // AND all active 2025 courses (cohort already reached that year).
-
     const kept2017: Course[] = [];
     for (const c of courses2017) {
       const isRetired = is2017CourseRetiredForYear(c, enrollYear);
@@ -222,6 +218,7 @@ export function useCurriculumEngine() {
     const resolvedCourses: Course[] = [...kept2017, ...kept2025];
 
     // ── 5. Compute per-course status ──────────────────────────────────────────
+    // Status is based ONLY on approved courses (effectiveApproved), NOT simulated.
     const coursesWithStatus: CourseWithStatus[] = resolvedCourses.map(
       (course) => {
         const isSimulated = simulatedSet.has(course.code);
@@ -410,6 +407,18 @@ export function useCurriculumEngine() {
       (s, c) => s + c.credits,
       0,
     );
+
+    // willUnlock: projection of what WOULD unlock IF the selected courses were approved.
+    // This is for display purposes only in the simulator panel.
+    const projectedApproved = new Set(effectiveApproved);
+    for (const code of profile.simulatedCourses) {
+      projectedApproved.add(code);
+      const c25 = equiv2017to2025.get(code);
+      if (c25) projectedApproved.add(c25);
+      const c17arr = equiv2025to2017.get(code);
+      if (c17arr) c17arr.forEach((c) => projectedApproved.add(c));
+    }
+
     const willUnlock = coursesWithEnrollment.filter(
       (c) =>
         c.status === "locked" &&
